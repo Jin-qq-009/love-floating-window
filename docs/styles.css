@@ -145,7 +145,7 @@ body {
 /* Hero grid */
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(260px, .8fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -153,30 +153,39 @@ body {
 .meet-card {
   min-height: 178px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(140px, 1fr) minmax(150px, 45%);
   align-items: center;
   gap: 16px;
-  padding: 22px;
+  padding: 20px;
   background: linear-gradient(135deg, #fff, #ffe8f1);
 }
 
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: var(--pink);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
-.meet-card h2 { font-size: 28px; letter-spacing: 0; }
+.meet-card h2 {
+  font-size: 22px;
+  letter-spacing: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 
 .meet-card h2 strong {
   color: var(--pink-dark);
-  font-size: 54px;
-  line-height: .9;
+  font-size: 38px;
+  line-height: 1;
+  vertical-align: -2px;
+  margin-right: 2px;
 }
 
 .map-route {
-  min-height: 320px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -189,7 +198,7 @@ body {
 
 #meetupMap {
   width: 100%;
-  height: 320px;
+  height: 200px;
   border-radius: 16px 16px 0 0;
   position: relative;
   background: #e8e0d8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'%3E%3Crect fill='%23e8e0d8' width='256' height='256'/%3E%3Ctext x='128' y='128' text-anchor='middle' dominant-baseline='middle' fill='%23b0a8a0' font-size='14' font-family='sans-serif'%3E地图加载中...%3C/text%3E%3C/svg%3E") center/48px repeat;
@@ -749,10 +758,30 @@ select {
 }
 
 /* Responsive */
-@media (max-width: 860px) {
+@media (max-width: 680px) {
   .hero-grid, .meet-card, .status-grid,
   .summary-grid, .todo-columns, .memory-grid {
     grid-template-columns: 1fr;
   }
   .todo-board.wide { grid-column: auto; }
+  .meet-card {
+    padding: 16px;
+    gap: 12px;
+  }
+  .meet-card h2 { font-size: 18px; }
+  .meet-card h2 strong { font-size: 32px; }
+  #meetupMap { height: 180px; }
+  .map-route { min-height: 180px; }
+  .quick-note { padding: 16px; }
+}
+
+@media (max-width: 860px) and (min-width: 681px) {
+  .meet-card {
+    grid-template-columns: minmax(120px, 1fr) minmax(160px, 48%);
+    padding: 16px;
+  }
+  .meet-card h2 { font-size: 20px; }
+  .meet-card h2 strong { font-size: 34px; }
+  #meetupMap { height: 190px; }
+  .map-route { min-height: 190px; }
 }

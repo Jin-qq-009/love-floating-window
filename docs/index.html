@@ -24,8 +24,11 @@
     /* 移动端优化 */
     @media (max-width: 520px) {
       .app-window { max-width: 100%; box-shadow: none; }
-      .meet-card { grid-template-columns: 1fr; }
-      #meetupMap { height: 220px; }
+      .meet-card { grid-template-columns: 1fr; padding: 14px; gap: 10px; }
+      .meet-card h2 { font-size: 18px; }
+      .meet-card h2 strong { font-size: 32px; }
+      #meetupMap { height: 180px; }
+      .map-route { min-height: 180px; }
     }
   </style>
 </head>
