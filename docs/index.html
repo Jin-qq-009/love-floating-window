@@ -8,28 +8,33 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="pink-translucent">
   <meta name="theme-color" content="#e85d91">
   <title>我们的小窗</title>
-  <link rel="stylesheet" href="./leaflet.css?v=3">
-  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="stylesheet" href="./leaflet.css?v=4">
+  <link rel="stylesheet" href="./styles.css?v=4">
   <style>
-    /* 网页版适配 */
+    /* 网页版适配 — 桌面 App 风格 */
     html, body { height: 100%; margin: 0; padding: 0; }
     .app-window {
-      max-width: 520px;
+      max-width: 960px;
       margin: 0 auto;
       min-height: 100vh;
-      box-shadow: 0 0 60px rgba(151,82,113,.08);
+      box-shadow: 0 0 80px rgba(151,82,113,.06);
     }
     /* 隐藏 Electron 窗口按钮 */
     .window-actions { display: none !important; }
-    .hero-grid { grid-template-columns: 1fr; }
-    .meet-card { grid-template-columns: 1fr; }
-    .map-route { width: 100%; min-width: 0; }
-    /* 移动端优化 */
-    @media (max-width: 520px) {
+    /* 移动端降级 */
+    @media (max-width: 768px) {
       .app-window { max-width: 100%; box-shadow: none; }
-      .meet-card { grid-template-columns: 1fr; padding: 14px; gap: 10px; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .meet-card { padding: 16px; }
+      .meet-card h2 { font-size: 22px; }
+      .meet-card h2 strong { font-size: 36px; }
+      #meetupMap { height: 200px; }
+      .map-route { min-height: 200px; }
+      .settings-list { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
       .meet-card h2 { font-size: 18px; }
-      .meet-card h2 strong { font-size: 32px; }
+      .meet-card h2 strong { font-size: 30px; }
       #meetupMap { height: 180px; }
       .map-route { min-height: 180px; }
     }
@@ -364,9 +369,9 @@
     </div>
   </div>
 
-  <script src="./store.js?v=3"></script>
-  <script src="./leaflet.js?v=3"></script>
-  <script src="./map.js?v=3"></script>
-  <script src="./app.js?v=3"></script>
+  <script src="./store.js?v=4"></script>
+  <script src="./leaflet.js?v=4"></script>
+  <script src="./map.js?v=4"></script>
+  <script src="./app.js?v=4"></script>
 </body>
 </html>

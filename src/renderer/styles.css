@@ -26,11 +26,11 @@ body {
 
 /* 标题栏 */
 .titlebar {
-  height: 76px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 22px;
+  padding: 0 28px;
   background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,242,248,.96));
   border-bottom: 1px solid var(--line);
   -webkit-app-region: drag;
@@ -98,7 +98,7 @@ body {
 /* Tabs */
 .tabs {
   display: flex; align-items: center; gap: 8px;
-  padding: 12px 18px;
+  padding: 12px 24px;
   background: #fffafd;
   border-bottom: 1px solid var(--line);
 }
@@ -122,7 +122,7 @@ body {
 /* Views */
 .view {
   display: none;
-  padding: 18px;
+  padding: 24px;
   overflow-y: auto;
   animation: viewFadeIn .3s ease;
 }
@@ -142,35 +142,34 @@ body {
   box-shadow: 0 12px 34px rgba(151,82,113,.08);
 }
 
-/* Hero grid */
+/* Hero grid — 桌面端双栏，地图占更宽 */
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 20px;
 }
 
-/* Meet card */
+/* Meet card — 桌面端：地图占满右侧 */
 .meet-card {
-  min-height: 178px;
-  display: grid;
-  grid-template-columns: minmax(140px, 1fr) minmax(150px, 45%);
-  align-items: center;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  padding: 20px;
+  padding: 24px;
   background: linear-gradient(135deg, #fff, #ffe8f1);
 }
 
 .eyebrow {
   margin: 0 0 6px;
   color: var(--pink);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
 
 .meet-card h2 {
-  font-size: 22px;
+  font-size: 28px;
   letter-spacing: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -178,16 +177,16 @@ body {
 
 .meet-card h2 strong {
   color: var(--pink-dark);
-  font-size: 38px;
+  font-size: 48px;
   line-height: 1;
-  vertical-align: -2px;
+  vertical-align: -3px;
   margin-right: 2px;
 }
 
 .map-route {
   width: 100%;
   min-width: 0;
-  min-height: 200px;
+  min-height: 280px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -202,7 +201,7 @@ body {
 
 #meetupMap {
   width: 100%;
-  height: 200px;
+  height: 280px;
   border-radius: 16px 16px 0 0;
   position: relative;
   z-index: 1;
@@ -553,7 +552,12 @@ select {
 .memory-card:hover .del-btn { display: grid; }
 
 /* Settings */
-.settings-list { max-width: 480px; }
+.settings-list {
+  max-width: 600px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
 
 .settings-item {
   margin-bottom: 16px;
@@ -588,6 +592,7 @@ select {
   display: flex;
   gap: 12px;
   align-items: center;
+  grid-column: 1 / -1;
 }
 
 /* Modal */
@@ -765,34 +770,36 @@ select {
   opacity: 1;
 }
 
-/* Responsive */
-@media (max-width: 680px) {
-  .hero-grid, .meet-card, .status-grid,
-  .summary-grid, .todo-columns, .memory-grid {
+/* Responsive — 桌面优先 */
+@media (max-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .meet-card {
+    padding: 18px;
+  }
+  .meet-card h2 { font-size: 22px; }
+  .meet-card h2 strong { font-size: 38px; }
+  #meetupMap { height: 200px; }
+  .map-route { min-height: 200px; }
+  .status-grid, .summary-grid, .todo-columns {
     grid-template-columns: 1fr;
   }
   .todo-board.wide { grid-column: auto; }
+  .memory-grid { grid-template-columns: 1fr 1fr; }
+  .settings-list { grid-template-columns: 1fr; }
+  .quick-note { padding: 18px; }
+}
+
+@media (max-width: 520px) {
+  .view { padding: 16px; }
   .meet-card {
-    padding: 16px;
+    padding: 14px;
     gap: 12px;
   }
   .meet-card h2 { font-size: 18px; }
   .meet-card h2 strong { font-size: 32px; }
   #meetupMap { height: 180px; }
   .map-route { min-height: 180px; }
-  .quick-note { padding: 16px; }
-}
-
-@media (max-width: 860px) and (min-width: 681px) {
-  .hero-grid {
-    grid-template-columns: 1fr;
-  }
-  .meet-card {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-  .meet-card h2 { font-size: 20px; }
-  .meet-card h2 strong { font-size: 34px; }
-  #meetupMap { height: 190px; }
-  .map-route { min-height: 190px; }
+  .memory-grid { grid-template-columns: 1fr; }
 }
