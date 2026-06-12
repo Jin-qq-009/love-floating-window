@@ -578,19 +578,45 @@
   function fillSettings() {
     data = S.loadData();
     document.getElementById('settingMyName').value = data.me.name;
-    document.getElementById('settingMyCity').value = data.me.city || '';
     document.getElementById('settingPartnerName').value = data.partner.name;
-    document.getElementById('settingPartnerCity').value = data.partner.city || '';
     document.getElementById('settingMeetupDate').value = data.meetup.date || '';
     document.getElementById('settingMeetupLocation').value = data.meetup.location || '';
     document.getElementById('settingMeetupNote').value = data.meetup.note || '';
+
+    // 更新城市选择器显示
+    var myCityDisplay = document.getElementById('myCityDisplay');
+    var partnerCityDisplay = document.getElementById('partnerCityDisplay');
+    if (data.me.city) {
+      myCityDisplay.textContent = data.me.city;
+      myCityDisplay.classList.remove('empty');
+    } else {
+      myCityDisplay.textContent = '选择城市';
+      myCityDisplay.classList.add('empty');
+    }
+    if (data.partner.city) {
+      partnerCityDisplay.textContent = data.partner.city;
+      partnerCityDisplay.classList.remove('empty');
+    } else {
+      partnerCityDisplay.textContent = '选择城市';
+      partnerCityDisplay.classList.add('empty');
+    }
+    document.getElementById('settingMyCity').value = data.me.city || '';
+    document.getElementById('settingMyLat').value = data.me.lat || '';
+    document.getElementById('settingMyLng').value = data.me.lng || '';
+    document.getElementById('settingPartnerCity').value = data.partner.city || '';
+    document.getElementById('settingPartnerLat').value = data.partner.lat || '';
+    document.getElementById('settingPartnerLng').value = data.partner.lng || '';
   }
 
   document.getElementById('btnSaveSettings').addEventListener('click', function () {
     var myName = document.getElementById('settingMyName').value.trim();
     var myCity = document.getElementById('settingMyCity').value.trim();
+    var myLat = parseFloat(document.getElementById('settingMyLat').value);
+    var myLng = parseFloat(document.getElementById('settingMyLng').value);
     var partnerName = document.getElementById('settingPartnerName').value.trim();
     var partnerCity = document.getElementById('settingPartnerCity').value.trim();
+    var partnerLat = parseFloat(document.getElementById('settingPartnerLat').value);
+    var partnerLng = parseFloat(document.getElementById('settingPartnerLng').value);
 
     if (myName) {
       data.me.name = myName;
@@ -598,12 +624,9 @@
     }
     if (myCity) {
       data.me.city = myCity;
-      var coords = S.getCityCoords(myCity);
-      if (coords) {
-        data.me.lat = coords[0];
-        data.me.lng = coords[1];
-      } else {
-        showToast('未找到"' + myCity + '"的坐标，地图可能无法显示');
+      if (!isNaN(myLat) && !isNaN(myLng)) {
+        data.me.lat = myLat;
+        data.me.lng = myLng;
       }
     }
     if (partnerName) {
@@ -612,12 +635,9 @@
     }
     if (partnerCity) {
       data.partner.city = partnerCity;
-      var coords2 = S.getCityCoords(partnerCity);
-      if (coords2) {
-        data.partner.lat = coords2[0];
-        data.partner.lng = coords2[1];
-      } else {
-        showToast('未找到"' + partnerCity + '"的坐标，地图可能无法显示');
+      if (!isNaN(partnerLat) && !isNaN(partnerLng)) {
+        data.partner.lat = partnerLat;
+        data.partner.lng = partnerLng;
       }
     }
     data.meetup.date = document.getElementById('settingMeetupDate').value || data.meetup.date;
@@ -640,53 +660,184 @@
     }
   });
 
-  // ==================== City Autocomplete ====================
+  // ==================== Global City Picker ====================
 
-  function setupCityAutocomplete(inputId) {
-    var input = document.getElementById(inputId);
-    var listEl = document.createElement('div');
-    listEl.className = 'city-suggestions';
-    listEl.style.display = 'none';
-    input.parentNode.appendChild(listEl);
+  var CITIES = window.WORLD_CITIES || [];
 
-    input.addEventListener('input', function () {
-      var val = input.value.trim();
-      if (!val) {
-        listEl.style.display = 'none';
-        return;
-      }
-      var cities = Object.keys(S.CITY_COORDS);
-      var matches = cities.filter(function (c) { return c.includes(val); }).slice(0, 6);
-      if (matches.length === 0) {
-        listEl.style.display = 'none';
-        return;
-      }
-      listEl.innerHTML = '';
-      matches.forEach(function (city) {
-        var item = document.createElement('div');
-        item.className = 'city-suggestion-item';
-        item.textContent = city;
-        item.addEventListener('mousedown', function (e) {
-          e.preventDefault();
-          input.value = city;
-          listEl.style.display = 'none';
-        });
-        listEl.appendChild(item);
+  function setupCityPicker(pickerId, hiddenInputId, latInputId, lngInputId, displayId) {
+    var picker = document.getElementById(pickerId);
+    var display = picker.querySelector('.city-picker-display');
+    var displayValue = document.getElementById(displayId);
+    var dropdown = picker.querySelector('.city-picker-dropdown');
+    var searchInput = picker.querySelector('.city-picker-search');
+    var listEl = picker.querySelector('.city-picker-list');
+    var onlineEl = picker.querySelector('.city-picker-online');
+    var tabBtns = picker.querySelectorAll('.city-tab');
+    var currentRegion = 'hot';
+    var searchTimer = null;
+
+    // 打开/关闭
+    function openPicker() {
+      // 关掉其他 picker
+      document.querySelectorAll('.city-picker.open').forEach(function (p) {
+        if (p !== picker) p.classList.remove('open');
       });
-      listEl.style.display = 'block';
+      picker.classList.add('open');
+      searchInput.value = '';
+      currentRegion = 'hot';
+      tabBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.region === 'hot'); });
+      renderList('hot');
+      setTimeout(function () { searchInput.focus(); }, 50);
+    }
+
+    function closePicker() {
+      picker.classList.remove('open');
+    }
+
+    display.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (picker.classList.contains('open')) {
+        closePicker();
+      } else {
+        openPicker();
+      }
     });
 
-    input.addEventListener('blur', function () {
-      setTimeout(function () { listEl.style.display = 'none'; }, 200);
+    // 点击外部关闭
+    document.addEventListener('click', function (e) {
+      if (!picker.contains(e.target)) closePicker();
     });
 
-    input.addEventListener('focus', function () {
-      if (listEl.children.length > 0) listEl.style.display = 'block';
+    // Tab 切换
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        currentRegion = btn.dataset.region;
+        tabBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.region === currentRegion); });
+        searchInput.value = '';
+        renderList(currentRegion);
+        onlineEl.style.display = 'none';
+      });
     });
+
+    // 搜索
+    searchInput.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      var val = searchInput.value.trim();
+      if (!val) {
+        renderList(currentRegion);
+        onlineEl.style.display = 'none';
+        return;
+      }
+      // 本地搜索
+      var results = CITIES.filter(function (c) {
+        var ql = val.toLowerCase();
+        return c[0].toLowerCase().includes(ql) || c[1].toLowerCase().includes(ql);
+      });
+
+      if (results.length > 0) {
+        renderCityItems(results);
+        // 如果结果较少，显示在线搜索入口
+        onlineEl.style.display = results.length < 8 ? 'flex' : 'none';
+      } else {
+        listEl.innerHTML = '<div class="city-picker-loading" style="padding:12px">本地未找到匹配城市</div>';
+        onlineEl.style.display = 'flex';
+      }
+
+      // 延迟在线搜索
+      searchTimer = setTimeout(function () {
+        if (val.length >= 2) searchOnline(val);
+      }, 600);
+    });
+
+    // 在线搜索
+    function searchOnline(query) {
+      var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=6&accept-language=zh';
+      fetch(url, { headers: { 'User-Agent': 'LoveFloatingWindow/1.0' } })
+        .then(function (r) { return r.json(); })
+        .then(function (results) {
+          if (!results || results.length === 0) return;
+          var existingNames = {};
+          CITIES.forEach(function (c) { existingNames[c[0]] = true; });
+          var onlineItems = results.filter(function (r) {
+            return r.display_name && !existingNames[r.display_name.split(',')[0]];
+          }).slice(0, 5);
+
+          if (onlineItems.length === 0) return;
+
+          // 在列表末尾追加在线结果
+          var sep = listEl.querySelector('.city-online-sep');
+          if (sep) sep.remove();
+
+          var separator = document.createElement('div');
+          separator.className = 'city-online-sep';
+          separator.style.cssText = 'padding:6px 14px;font-size:11px;color:var(--muted);background:#fffbfc;border-top:1px solid var(--line);';
+          separator.textContent = '在线搜索结果';
+          listEl.appendChild(separator);
+
+          onlineItems.forEach(function (item) {
+            var nameParts = item.display_name.split(',');
+            var cityName = nameParts[0].trim();
+            var countryName = nameParts.length > 1 ? nameParts[nameParts.length - 1].trim() : '';
+
+            var el = document.createElement('div');
+            el.className = 'city-online-item';
+            el.innerHTML = '<div class="city-item-name"><span class="cn-name">' + escapeHTML(cityName) + '</span><span class="en-name">' + escapeHTML(countryName) + '</span></div><span class="online-badge">在线</span>';
+            el.addEventListener('mousedown', function (e) {
+              e.preventDefault();
+              selectCity(cityName, parseFloat(item.lat), parseFloat(item.lon));
+            });
+            listEl.appendChild(el);
+          });
+        })
+        .catch(function () { /* 静默失败，不阻断用户体验 */ });
+    }
+
+    // 在线搜索入口点击
+    onlineEl.addEventListener('click', function () {
+      var val = searchInput.value.trim();
+      if (val.length >= 2) searchOnline(val);
+    });
+
+    // 渲染列表
+    function renderList(region) {
+      var cities = CITIES.filter(function (c) { return c[5] === region; });
+      renderCityItems(cities);
+    }
+
+    function renderCityItems(cities) {
+      listEl.innerHTML = '';
+      if (cities.length === 0) {
+        listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">暂无匹配城市</div>';
+        return;
+      }
+      var currentValue = document.getElementById(hiddenInputId).value;
+      cities.forEach(function (city) {
+        var el = document.createElement('div');
+        el.className = 'city-item' + (city[0] === currentValue ? ' selected' : '');
+        el.innerHTML = '<div class="city-item-name"><span class="cn-name">' + escapeHTML(city[0]) + '</span><span class="en-name">' + escapeHTML(city[1]) + '</span></div><span class="city-item-country">' + escapeHTML(city[2]) + '</span>';
+        el.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          selectCity(city[0], city[3], city[4]);
+        });
+        listEl.appendChild(el);
+      });
+    }
+
+    function selectCity(name, lat, lng) {
+      document.getElementById(hiddenInputId).value = name;
+      document.getElementById(latInputId).value = lat;
+      document.getElementById(lngInputId).value = lng;
+      displayValue.textContent = name;
+      displayValue.classList.remove('empty');
+      closePicker();
+    }
+
+    // 初始渲染
+    renderList('hot');
   }
 
-  setupCityAutocomplete('settingMyCity');
-  setupCityAutocomplete('settingPartnerCity');
+  setupCityPicker('myCityPicker', 'settingMyCity', 'settingMyLat', 'settingMyLng', 'myCityDisplay');
+  setupCityPicker('partnerCityPicker', 'settingPartnerCity', 'settingPartnerLat', 'settingPartnerLng', 'partnerCityDisplay');
 
   // ==================== Auto Refresh ====================
 

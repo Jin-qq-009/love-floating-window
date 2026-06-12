@@ -222,7 +222,17 @@ window.AppStore = (function () {
   };
 
   function getCityCoords(cityName) {
-    return CITY_COORDS[cityName] || null;
+    // 先从旧库查
+    if (CITY_COORDS[cityName]) return CITY_COORDS[cityName];
+    // 再从全球城市库查
+    if (window.WORLD_CITIES) {
+      for (var i = 0; i < window.WORLD_CITIES.length; i++) {
+        if (window.WORLD_CITIES[i][0] === cityName) {
+          return [window.WORLD_CITIES[i][3], window.WORLD_CITIES[i][4]];
+        }
+      }
+    }
+    return null;
   }
 
   function calcDistance(lat1, lng1, lat2, lng2) {
