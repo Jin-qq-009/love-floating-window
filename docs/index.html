@@ -4,10 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>我们的小窗</title>
-  <link rel="stylesheet" href="./leaflet.css">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./leaflet.css?v=12">
+  <link rel="stylesheet" href="./styles.css?v=12">
 </head>
 <body>
+  <style>
+    /* GitHub Pages 适配 */
+    .window-actions { display: none !important; }
+    .titlebar { -webkit-app-region: no-drag; cursor: default; }
+    .titlebar-drag { -webkit-app-region: no-drag; }
+    .app-window { max-width: 960px; margin: 0 auto; }
+    body { background: linear-gradient(135deg, #fff4f8 0%, #fff9f2 52%, #f9efff 100%); }
+  </style>
   <a href="#mainContent" class="skip-nav">跳到主要内容</a>
 
   <section class="app-window">
@@ -608,10 +616,10 @@
     </div>
   </div>
 
-  <script src="./store.js"></script>
-  <script src="./world-cities.js"></script>
-  <script src="./leaflet.js"></script>
-  <script src="./map.js"></script>
-  <script src="./app.js"></script>
+  <script src="./store.js?v=12"></script>
+  <script src="./world-cities.js?v=12"></script>
+  <script src="./leaflet.js?v=12"></script>
+  <script src="./map.js?v=12"></script>
+  <script src="./app.js?v=12"></script>
 </body>
 </html>
