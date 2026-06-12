@@ -217,13 +217,17 @@
           cb.disabled = true;
           cb.style.accentColor = 'var(--brand)';
           label.appendChild(cb);
+          // 把所有文字包在一个 span 里，避免 grid 多 cell 问题
+          var textWrap = document.createElement('span');
+          textWrap.style.display = 'inline';
           var ownerSpan = document.createElement('span');
           ownerSpan.className = 'todo-owner';
           ownerSpan.style.color = t.ownerColor;
           ownerSpan.textContent = t.owner;
-          label.appendChild(document.createTextNode(' '));
-          label.appendChild(ownerSpan);
-          label.appendChild(document.createTextNode('：' + t.text));
+          textWrap.appendChild(document.createTextNode(' '));
+          textWrap.appendChild(ownerSpan);
+          textWrap.appendChild(document.createTextNode('：' + t.text));
+          label.appendChild(textWrap);
           previewEl.appendChild(label);
         });
       }
