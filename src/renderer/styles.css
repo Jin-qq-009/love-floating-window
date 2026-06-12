@@ -342,12 +342,15 @@ body {
   font-weight: 600;
 }
 
-.meetup-author .author-dot {
+/* 通用分隔圆点 */
+.author-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: var(--muted-soft);
   display: inline-block;
+  margin: 0 4px;
+  vertical-align: middle;
 }
 
 /* — Map Route — */
@@ -743,6 +746,17 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--brand); 
 
 .timeline time { color: var(--brand-dark); font-weight: 700; font-size: var(--fs-xs); }
 .timeline p { margin-top: 4px; color: var(--muted); line-height: 1.5; font-size: var(--fs-sm); }
+
+/* 时间线作者标注 */
+.timeline-author {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted-soft);
+  line-height: 1;
+}
 
 select {
   border: 1px solid var(--line);

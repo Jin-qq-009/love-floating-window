@@ -50,16 +50,16 @@ window.AppStore = (function () {
       },
       todos: {
         me: [
-          { id: 'm1', text: '确认见面那天的时间', note: '这个今天有空再看', done: false },
-          { id: 'm2', text: '给胖胖磨叽留一句晚安', note: '不需要很长', done: false },
+          { id: 'm1', text: '确认见面那天的时间', note: '这个今天有空再看', done: false, createdBy: 'me', createdAt: '09:00' },
+          { id: 'm2', text: '给胖胖磨叽留一句晚安', note: '不需要很长', done: false, createdBy: 'me', createdAt: '09:05' },
         ],
         partner: [
-          { id: 'p1', text: '回家后报平安', note: '已完成归档', done: false },
-          { id: 'p2', text: '早点休息', note: '今天别熬太晚', done: false },
+          { id: 'p1', text: '回家后报平安', note: '已完成归档', done: false, createdBy: 'partner', createdAt: '18:30' },
+          { id: 'p2', text: '早点休息', note: '今天别熬太晚', done: false, createdBy: 'partner', createdAt: '18:32' },
         ],
         shared: [
-          { id: 's1', text: '晚上视频 20 分钟', note: '聊一下周末安排', done: false },
-          { id: 's2', text: '确认见面当天晚餐', note: '想吃热乎一点的', done: false },
+          { id: 's1', text: '晚上视频 20 分钟', note: '聊一下周末安排', done: false, createdBy: 'me', createdAt: '10:00' },
+          { id: 's2', text: '确认见面当天晚餐', note: '想吃热乎一点的', done: false, createdBy: 'me', createdAt: '10:05' },
         ],
       },
       completed: {
@@ -117,6 +117,7 @@ window.AppStore = (function () {
           content: '胖胖磨叽：今天有点忙，但想到快见面了，就觉得还能再坚持一下。',
           time: '18:42',
           date: '2026-06-12',
+          author: 'partner',
         },
         {
           id: 'tl2',
@@ -124,6 +125,7 @@ window.AppStore = (function () {
           content: '倩倩把地点更新为"北京南站"，备注：周五晚上到。',
           time: '12:10',
           date: '2026-06-12',
+          author: 'me',
         },
         {
           id: 'tl3',
@@ -131,6 +133,7 @@ window.AppStore = (function () {
           content: '倩倩更新心情为"开心"，状态为"工作中"。',
           time: '09:20',
           date: '2026-06-12',
+          author: 'me',
         },
       ],
     };
@@ -154,6 +157,30 @@ window.AppStore = (function () {
         // 迁移：补上 meetup.updatedBy / updatedAt 字段
         if (data.meetup && !data.meetup.hasOwnProperty('updatedBy')) { data.meetup.updatedBy = null; }
         if (data.meetup && !data.meetup.hasOwnProperty('updatedAt')) { data.meetup.updatedAt = null; }
+        // 迁移：为旧待办补上 createdBy
+        ['me', 'partner', 'shared'].forEach(function (key) {
+          if (data.todos && data.todos[key]) {
+            data.todos[key].forEach(function (t) {
+              if (!t.createdBy) { t.createdBy = (key === 'partner' ? 'partner' : 'me'); }
+              if (!t.createdAt) { t.createdAt = ''; }
+            });
+          }
+        });
+        // 迁移：为旧时间线补上 author
+        if (data.timeline) {
+          data.timeline.forEach(function (t) {
+            if (!t.author) {
+              // 从内容推测作者
+              if (t.content && (t.content.indexOf('倩倩') !== -1 || t.content.indexOf(data.me.name) !== -1)) {
+                t.author = 'me';
+              } else if (t.content && (t.content.indexOf('胖胖磨叽') !== -1 || t.content.indexOf(data.partner.name) !== -1)) {
+                t.author = 'partner';
+              } else {
+                t.author = 'me';
+              }
+            }
+          });
+        }
         // 迁移：把已勾选的待办移到 completed
         ['me', 'partner', 'shared'].forEach(function (key) {
           if (data.todos && data.todos[key]) {

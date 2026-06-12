@@ -290,6 +290,15 @@
       p.textContent = t.content;
       div.appendChild(strong);
       div.appendChild(p);
+      // 添加创建者标注
+      if (t.author) {
+        var authorName = t.author === 'me' ? data.me.name : data.partner.name;
+        var authorColor = t.author === 'me' ? 'var(--color-me)' : 'var(--color-partner)';
+        var authorEl = document.createElement('span');
+        authorEl.className = 'timeline-author';
+        authorEl.innerHTML = '<span style="color:' + authorColor + ';font-weight:600">' + escapeHTML(authorName) + '</span> 发布';
+        div.appendChild(authorEl);
+      }
       article.appendChild(timeEl);
       article.appendChild(div);
       timelineEl.appendChild(article);
@@ -491,6 +500,7 @@
       content: data.me.name + '更新心情为"' + moodText + '"，状态为"' + data.status.me.quickStatus + '"。',
       time: S.getNowTimeStr(),
       date: S.getNowDateStr(),
+      author: 'me',
     });
 
     S.saveData(data);
@@ -524,6 +534,7 @@
       content: data.me.name + '：' + content,
       time: S.getNowTimeStr(),
       date: S.getNowDateStr(),
+      author: 'me',
     });
 
     S.saveData(data);
@@ -561,6 +572,7 @@
       content: data.me.name + '更新了见面计划：' + date + ' · ' + (location || ''),
       time: S.getNowTimeStr(),
       date: S.getNowDateStr(),
+      author: 'me',
     });
 
     S.saveData(data);
@@ -619,6 +631,7 @@
         // 勾选 → 移到已完成
         var item = data.todos[category].splice(idx, 1)[0];
         item.completedAt = S.getNowTimeStr();
+        item.completedBy = 'me';
         if (!data.completed) data.completed = { me: [], partner: [], shared: [] };
         data.completed[category].unshift(item);
         S.saveData(data);
@@ -675,6 +688,7 @@
         // 取消勾选 → 恢复到待办
         var restored = data.completed[category].splice(idx, 1)[0];
         delete restored.completedAt;
+        delete restored.completedBy;
         data.todos[category].unshift(restored);
         S.saveData(data);
         renderTodos();
@@ -703,7 +717,15 @@
 
       var timeEl = document.createElement('span');
       timeEl.className = 'completed-time';
-      timeEl.textContent = item.completedAt || '';
+      // 显示完成者 + 时间
+      if (item.completedBy) {
+        var completerName = item.completedBy === 'me' ? data.me.name : data.partner.name;
+        var completerColor = item.completedBy === 'me' ? 'var(--color-me)' : 'var(--color-partner)';
+        timeEl.innerHTML = '<span style="color:' + completerColor + ';font-weight:600">' + escapeHTML(completerName) + '</span> 完成' +
+          (item.completedAt ? '<span class="author-dot"></span>' + escapeHTML(item.completedAt) : '');
+      } else {
+        timeEl.textContent = item.completedAt || '';
+      }
 
       div.appendChild(cb);
       div.appendChild(textWrap);
@@ -883,6 +905,7 @@
       content: data.me.name + '添加了纪念日"' + title + '"。',
       time: S.getNowTimeStr(),
       date: S.getNowDateStr(),
+      author: 'me',
     });
 
     S.saveData(data);
