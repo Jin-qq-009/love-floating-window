@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="description" content="我们的小窗 - 异地恋专属小空间">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="pink-translucent">
+  <meta name="theme-color" content="#e85d91">
+  <title>我们的小窗</title>
+  <link rel="stylesheet" href="./leaflet.css">
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* 网页版适配 */
+    html, body { height: 100%; margin: 0; padding: 0; }
+    .app-window {
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      box-shadow: 0 0 60px rgba(151,82,113,.08);
+    }
+    /* 隐藏 Electron 窗口按钮 */
+    .window-actions { display: none !important; }
+    /* 移动端优化 */
+    @media (max-width: 520px) {
+      .app-window { max-width: 100%; box-shadow: none; }
+      .meet-card { grid-template-columns: 1fr; }
+      #meetupMap { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="app-window">
+    <header class="titlebar">
+      <div class="titlebar-drag">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">
+            <span></span><i></i><span></span>
+          </div>
+          <div>
+            <h1>我们的小窗</h1>
+            <p class="sync-status">同步中 · 刚刚更新</p>
+          </div>
+        </div>
+      </div>
+      <div class="window-actions">
+        <button class="win-btn minimize" id="btnMinimize" title="最小化"></button>
+        <button class="win-btn close" id="btnClose" title="关闭到悬浮窗"></button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="主导航">
+      <button class="tab active" type="button" data-view="home">首页</button>
+      <button class="tab" type="button" data-view="todos">待办</button>
+      <button class="tab" type="button" data-view="memories">纪念日</button>
+      <button class="tab ghost" type="button" data-view="settings">设置</button>
+    </nav>
+
+    <!-- ===== 首页 ===== -->
+    <section class="view active" id="homeView">
+      <div class="hero-grid">
+        <article class="meet-card">
+          <div>
+            <p class="eyebrow">下次见面</p>
+            <h2>还有 <strong id="meetupDays">--</strong> 天</h2>
+            <p class="soft-text" id="meetupInfo">--</p>
+            <button class="text-btn edit-meetup" type="button">编辑见面计划</button>
+          </div>
+          <div class="map-route" aria-label="城市路线地图">
+            <div id="meetupMap"></div>
+            <div class="map-caption">
+              <span id="mapCityMe">诸暨</span>
+              <div class="map-info">
+                <i></i>
+                <span id="mapDistance">--</span>
+                <i></i>
+              </div>
+              <span id="mapCityPartner">北京</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="quick-note">
+          <p class="eyebrow">最新留言</p>
+          <p class="quote" id="latestMessage">--</p>
+          <span id="latestMessageMeta">--</span>
+          <button class="text-btn" id="btnLeaveMessage" type="button">留言</button>
+        </article>
+      </div>
+
+      <section class="status-grid">
+        <article class="status-card" id="myStatusCard">
+          <div class="person-head">
+            <div class="avatar blush" id="myAvatar">倩</div>
+            <div>
+              <h3 id="myName">倩倩</h3>
+              <p id="myStatusText">--</p>
+            </div>
+          </div>
+          <div class="mood-pill pink" id="myMoodPill">--</div>
+          <p class="status-line" id="myFreeText">--</p>
+          <button class="text-btn edit-status" type="button" data-target="me">更新状态</button>
+        </article>
+
+        <article class="status-card" id="partnerStatusCard">
+          <div class="person-head">
+            <div class="avatar lilac" id="partnerAvatar">胖</div>
+            <div>
+              <h3 id="partnerName">胖胖磨叽</h3>
+              <p id="partnerStatusText">--</p>
+            </div>
+          </div>
+          <div class="mood-pill peach" id="partnerMoodPill">--</div>
+          <p class="status-line" id="partnerFreeText">--</p>
+        </article>
+      </section>
+
+      <section class="summary-grid">
+        <article class="panel-card">
+          <div class="section-title">
+            <h3>今日待办摘要</h3>
+            <button class="text-btn" type="button" data-jump="todos">查看全部</button>
+          </div>
+          <div class="todo-preview" id="todoPreview"></div>
+        </article>
+
+        <article class="panel-card">
+          <div class="section-title">
+            <h3>纪念日提醒</h3>
+            <button class="text-btn" type="button" data-jump="memories">查看</button>
+          </div>
+          <div id="memoryMiniList"></div>
+        </article>
+      </section>
+
+      <section class="panel-card timeline-card">
+        <div class="section-title">
+          <h3>时间线</h3>
+          <select id="timelineMonth" aria-label="月份归档">
+            <option value="all">全部</option>
+          </select>
+        </div>
+        <div class="timeline" id="timelineList"></div>
+      </section>
+    </section>
+
+    <!-- ===== 待办页 ===== -->
+    <section class="view" id="todosView">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">今天</p>
+          <h2>待办同步</h2>
+        </div>
+      </div>
+
+      <section class="todo-columns">
+        <article class="todo-board">
+          <div class="board-title">
+            <div class="avatar blush" id="todoMyAvatar">倩</div>
+            <div>
+              <h3 id="todoMyName">倩倩的待办</h3>
+              <p>未完成自动延续到明天</p>
+            </div>
+          </div>
+          <div id="myTodoList"></div>
+          <button class="add-task" type="button" data-add="me">+ 添加我的待办</button>
+        </article>
+
+        <article class="todo-board">
+          <div class="board-title">
+            <div class="avatar lilac" id="todoPartnerAvatar">胖</div>
+            <div>
+              <h3 id="todoPartnerName">胖胖磨叽的待办</h3>
+              <p>可查看，可添加建议标注</p>
+            </div>
+          </div>
+          <div id="partnerTodoList"></div>
+          <button class="add-task" type="button" data-add="partner">+ 给 TA 添加建议</button>
+        </article>
+
+        <article class="todo-board wide">
+          <div class="board-title">
+            <div class="avatar mint">共</div>
+            <div>
+              <h3>共同待办</h3>
+              <p>双方都可以新增、勾选和标注</p>
+            </div>
+          </div>
+          <div id="sharedTodoList"></div>
+          <button class="add-task" type="button" data-add="shared">+ 添加共同待办</button>
+        </article>
+      </section>
+    </section>
+
+    <!-- ===== 纪念日页 ===== -->
+    <section class="view" id="memoriesView">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">纪念日 / 小惊喜</p>
+          <h2>提醒和倒计时</h2>
+        </div>
+        <button class="primary-btn" type="button" id="btnAddMemory">+ 新增纪念</button>
+      </div>
+
+      <section class="memory-grid" id="memoryGrid"></section>
+    </section>
+
+    <!-- ===== 设置页 ===== -->
+    <section class="view" id="settingsView">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">设置</p>
+          <h2>个人与空间</h2>
+        </div>
+      </div>
+
+      <div class="settings-list">
+        <div class="settings-item">
+          <label>我的昵称</label>
+          <input type="text" id="settingMyName" placeholder="输入昵称">
+        </div>
+        <div class="settings-item">
+          <label>我的城市</label>
+          <input type="text" id="settingMyCity" placeholder="如：诸暨、上海、成都">
+        </div>
+        <div class="settings-item">
+          <label>TA 的昵称</label>
+          <input type="text" id="settingPartnerName" placeholder="输入对方昵称">
+        </div>
+        <div class="settings-item">
+          <label>TA 的城市</label>
+          <input type="text" id="settingPartnerCity" placeholder="如：北京、深圳、杭州">
+        </div>
+        <div class="settings-item">
+          <label>见面日期</label>
+          <input type="date" id="settingMeetupDate">
+        </div>
+        <div class="settings-item">
+          <label>见面地点</label>
+          <input type="text" id="settingMeetupLocation" placeholder="输入地点">
+        </div>
+        <div class="settings-item">
+          <label>见面备注</label>
+          <input type="text" id="settingMeetupNote" placeholder="输入备注">
+        </div>
+        <div class="settings-actions">
+          <button class="primary-btn" type="button" id="btnSaveSettings">保存设置</button>
+          <button class="text-btn danger" type="button" id="btnResetData">重置所有数据</button>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ===== 弹窗：更新状态 ===== -->
+  <div class="modal-overlay" id="modalStatus">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>更新我的状态</h3>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>心情</label>
+        <div class="pill-group" id="moodPicker"></div>
+        <label>快捷状态</label>
+        <div class="pill-group" id="statusPicker"></div>
+        <label>补充一句话</label>
+        <textarea id="freeTextInput" placeholder="说点什么..." rows="2"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="primary-btn" type="button" id="btnSaveStatus">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹窗：留言 ===== -->
+  <div class="modal-overlay" id="modalMessage">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>留言</h3>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="messageInput" placeholder="写点什么给 TA..." rows="3"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="primary-btn" type="button" id="btnSendMessage">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹窗：编辑见面计划 ===== -->
+  <div class="modal-overlay" id="modalMeetup">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>编辑见面计划</h3>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>见面日期</label>
+        <input type="date" id="meetupDateInput">
+        <label>地点</label>
+        <input type="text" id="meetupLocationInput" placeholder="输入地点">
+        <label>备注</label>
+        <input type="text" id="meetupNoteInput" placeholder="输入备注">
+      </div>
+      <div class="modal-footer">
+        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="primary-btn" type="button" id="btnSaveMeetup">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹窗：新增待办 ===== -->
+  <div class="modal-overlay" id="modalTodo">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="todoModalTitle">新增待办</h3>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>待办内容</label>
+        <input type="text" id="todoTextInput" placeholder="要做什么？">
+        <label>标注 / 留言（可选）</label>
+        <input type="text" id="todoNoteInput" placeholder="附加一句标注">
+      </div>
+      <div class="modal-footer">
+        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="primary-btn" type="button" id="btnSaveTodo">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹窗：新增纪念日 ===== -->
+  <div class="modal-overlay" id="modalMemory">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>新增纪念日</h3>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>标题</label>
+        <input type="text" id="memoryTitleInput" placeholder="纪念日标题">
+        <label>日期</label>
+        <input type="date" id="memoryDateInput">
+        <label>内容 / 备注</label>
+        <textarea id="memoryContentInput" placeholder="备注内容..." rows="2"></textarea>
+        <label class="checkbox-row">
+          <input type="checkbox" id="memoryRemindInput" checked>
+          <span>开启提醒</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="primary-btn" type="button" id="btnSaveMemory">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./store.js"></script>
+  <script src="./leaflet.js"></script>
+  <script src="./map.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

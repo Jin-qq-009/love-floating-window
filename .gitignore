@@ -3,3 +3,7 @@ dist/
 .DS_Store
 *.log
 .env
+
+# docs is auto-generated from src/renderer/ for GitHub Pages deployment
+# Run: cp -r src/renderer/* docs/
+# Do NOT manually edit docs/ files
