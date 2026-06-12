@@ -1537,6 +1537,382 @@
     });
   }
 
+  // ==================== 音乐播放器 ====================
+
+  var musicPlayer = document.getElementById('musicPlayer');
+  var musicToggle = document.getElementById('musicToggle');
+  var musicBody = document.getElementById('musicBody');
+  var musicCover = document.getElementById('musicCover');
+  var musicTitleEl = document.getElementById('musicTitle');
+  var musicArtistEl = document.getElementById('musicArtist');
+  var btnMusicPlay = document.getElementById('btnMusicPlay');
+  var btnMusicPrev = document.getElementById('btnMusicPrev');
+  var btnMusicNext = document.getElementById('btnMusicNext');
+  var musicPlaylist = document.getElementById('musicPlaylist');
+  var playlistItemsEl = document.getElementById('playlistItems');
+  var btnAddSong = document.getElementById('btnAddSong');
+
+  var audio = null;
+  var playlist = data.playlist || [];
+  var currentIndex = typeof data.currentSongIndex === 'number' ? data.currentSongIndex : 0;
+  var isPlaying = false;
+  var expanded = false;
+
+  function savePlaylist() {
+    data.playlist = playlist;
+    data.currentSongIndex = currentIndex;
+    S.saveData(data);
+  }
+
+  function createAudio() {
+    if (audio) {
+      try { audio.pause(); } catch (e) {}
+      audio.src = '';
+      audio = null;
+    }
+    audio = new Audio();
+    audio.volume = 0.6;
+
+    audio.addEventListener('ended', function () {
+      playNext();
+    });
+
+    audio.addEventListener('error', function () {
+      // 如果当前歌曲无法播放，尝试下一首
+      var song = playlist[currentIndex];
+      if (song && song.url) {
+        // 标记这首不可用，尝试下一首
+        showToast('无法播放：' + (song.title || '未知歌曲'));
+        playNext();
+      }
+    });
+
+    audio.addEventListener('play', function () {
+      isPlaying = true;
+      updatePlayButton();
+      musicPlayer.classList.add('playing');
+    });
+
+    audio.addEventListener('pause', function () {
+      isPlaying = false;
+      updatePlayButton();
+      musicPlayer.classList.remove('playing');
+    });
+  }
+
+  function getCurrentSong() {
+    return playlist[currentIndex] || null;
+  }
+
+  function updatePlayButton() {
+    var playIcon = btnMusicPlay.querySelector('.play-icon');
+    var pauseIcon = btnMusicPlay.querySelector('.pause-icon');
+    if (isPlaying) {
+      playIcon.style.display = 'none';
+      pauseIcon.style.display = '';
+      btnMusicPlay.setAttribute('title', '暂停');
+      btnMusicPlay.setAttribute('aria-label', '暂停');
+    } else {
+      playIcon.style.display = '';
+      pauseIcon.style.display = 'none';
+      btnMusicPlay.setAttribute('title', '播放');
+      btnMusicPlay.setAttribute('aria-label', '播放');
+    }
+  }
+
+  function updateMusicInfo() {
+    var song = getCurrentSong();
+    if (song) {
+      musicTitleEl.textContent = song.title || '未知歌曲';
+      musicArtistEl.textContent = song.artist || '--';
+    } else {
+      musicTitleEl.textContent = '未在播放';
+      musicArtistEl.textContent = '--';
+    }
+  }
+
+  function renderPlaylist() {
+    playlistItemsEl.innerHTML = '';
+    if (playlist.length === 0) {
+      playlistItemsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted-soft);font-size:12px">播放列表为空<br>点击 + 添加歌曲</div>';
+      return;
+    }
+    playlist.forEach(function (song, idx) {
+      var item = document.createElement('div');
+      item.className = 'playlist-item' + (idx === currentIndex ? ' active' : '');
+
+      var indexEl = document.createElement('span');
+      indexEl.className = 'playlist-index';
+      indexEl.textContent = (idx + 1);
+
+      var info = document.createElement('div');
+      info.className = 'playlist-song-info';
+      var titleEl = document.createElement('div');
+      titleEl.className = 'playlist-song-title';
+      titleEl.textContent = song.title || '未知歌曲';
+      var artistEl = document.createElement('div');
+      artistEl.className = 'playlist-song-artist';
+      artistEl.textContent = song.artist || '--';
+      info.appendChild(titleEl);
+      info.appendChild(artistEl);
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'playlist-remove';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.setAttribute('title', '移除');
+      removeBtn.setAttribute('aria-label', '移除 ' + (song.title || '歌曲'));
+
+      removeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        removeSong(idx);
+      });
+
+      item.appendChild(indexEl);
+      item.appendChild(info);
+      item.appendChild(removeBtn);
+
+      item.addEventListener('click', function () {
+        if (idx === currentIndex) {
+          togglePlay();
+        } else {
+          playSong(idx);
+        }
+        closePlaylist();
+      });
+
+      playlistItemsEl.appendChild(item);
+    });
+  }
+
+  function playSong(idx) {
+    if (!playlist[idx]) return;
+    currentIndex = idx;
+    savePlaylist();
+    updateMusicInfo();
+    renderPlaylist();
+
+    var song = playlist[idx];
+
+    if (!audio) createAudio();
+
+    if (song.url) {
+      audio.src = song.url;
+      audio.load();
+      audio.play().catch(function (e) {
+        console.warn('播放失败：', e.message);
+        showToast('播放失败，请检查音频链接');
+        isPlaying = false;
+        updatePlayButton();
+        musicPlayer.classList.remove('playing');
+      });
+    } else {
+      // 没有音频链接，仅展示歌曲信息
+      if (audio) { try { audio.pause(); } catch (e) {} }
+      isPlaying = false;
+      updatePlayButton();
+      musicPlayer.classList.remove('playing');
+    }
+  }
+
+  function togglePlay() {
+    var song = getCurrentSong();
+    if (!song) return;
+
+    if (!audio) createAudio();
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      if (song.url && (!audio.src || audio.src !== song.url)) {
+        audio.src = song.url;
+        audio.load();
+      }
+      if (!song.url) {
+        // 没有 URL，点击也不能播放
+        return;
+      }
+      audio.play().catch(function (e) {
+        console.warn('播放失败：', e.message);
+        isPlaying = false;
+        updatePlayButton();
+        musicPlayer.classList.remove('playing');
+      });
+    }
+  }
+
+  function playPrev() {
+    if (playlist.length === 0) return;
+    var idx = currentIndex - 1;
+    if (idx < 0) idx = playlist.length - 1;
+    playSong(idx);
+  }
+
+  function playNext() {
+    if (playlist.length === 0) return;
+    var idx = currentIndex + 1;
+    if (idx >= playlist.length) idx = 0;
+    playSong(idx);
+  }
+
+  function removeSong(idx) {
+    if (playlist.length <= 1) {
+      showToast('至少保留一首歌');
+      return;
+    }
+    var removed = playlist.splice(idx, 1)[0];
+    if (currentIndex >= playlist.length) {
+      currentIndex = Math.max(0, playlist.length - 1);
+    } else if (idx < currentIndex) {
+      currentIndex--;
+    }
+    savePlaylist();
+    renderPlaylist();
+    // 如果删除的是当前播放的，切换
+    if (audio && audio.src) {
+      var cur = getCurrentSong();
+      if (cur && cur.url) {
+        audio.src = cur.url;
+        audio.load();
+        if (isPlaying) audio.play().catch(function () {});
+      } else {
+        audio.pause();
+        isPlaying = false;
+        updatePlayButton();
+        musicPlayer.classList.remove('playing');
+      }
+    }
+    updateMusicInfo();
+  }
+
+  function addSong(title, artist, url) {
+    if (!title || !title.trim()) return;
+    playlist.push({
+      id: S.genId(),
+      title: title.trim(),
+      artist: (artist || '').trim(),
+      url: (url || '').trim(),
+    });
+    savePlaylist();
+    renderPlaylist();
+    // 关闭添加表单
+    musicPlaylist.classList.remove('show-add');
+  }
+
+  function toggleExpanded() {
+    expanded = !expanded;
+    if (expanded) {
+      musicPlayer.classList.add('expanded');
+    } else {
+      musicPlayer.classList.remove('expanded');
+    }
+  }
+
+  function closePlaylist() {
+    musicPlayer.classList.remove('playlist-open');
+  }
+
+  function togglePlaylist(e) {
+    if (e) e.stopPropagation();
+    var isOpen = musicPlayer.classList.contains('playlist-open');
+    if (isOpen) {
+      musicPlayer.classList.remove('playlist-open');
+    } else {
+      // Ensure expanded first
+      if (!expanded) toggleExpanded();
+      musicPlayer.classList.add('playlist-open');
+      renderPlaylist();
+    }
+  }
+
+  // 点击封面/歌曲信息展开播放列表
+  musicCover.addEventListener('click', togglePlaylist);
+  var musicInfoDiv = document.querySelector('.music-info');
+  if (musicInfoDiv) musicInfoDiv.addEventListener('click', togglePlaylist);
+
+  // 点击切换按钮
+  musicToggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (expanded && musicPlayer.classList.contains('playlist-open')) {
+      closePlaylist();
+    }
+    toggleExpanded();
+  });
+
+  btnMusicPlay.addEventListener('click', function (e) {
+    e.stopPropagation();
+    togglePlay();
+    // 如果播放且有 URL，展开
+    if (isPlaying && !expanded) toggleExpanded();
+  });
+
+  btnMusicPrev.addEventListener('click', function (e) {
+    e.stopPropagation();
+    playPrev();
+  });
+
+  btnMusicNext.addEventListener('click', function (e) {
+    e.stopPropagation();
+    playNext();
+  });
+
+  // 添加歌曲按钮
+  btnAddSong.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var showAdd = musicPlaylist.classList.contains('show-add');
+    if (showAdd) {
+      musicPlaylist.classList.remove('show-add');
+    } else {
+      // 动态创建添加表单（如果不存在）
+      var form = musicPlaylist.querySelector('.music-add-form');
+      if (!form) {
+        form = document.createElement('div');
+        form.className = 'music-add-form';
+        form.innerHTML = '<input type="text" class="add-song-title" placeholder="歌曲名称">' +
+          '<input type="text" class="add-song-artist" placeholder="歌手（可选）">' +
+          '<input type="text" class="add-song-url" placeholder="音频链接（可选）">' +
+          '<div class="music-add-row">' +
+            '<button class="btn-add-cancel">取消</button>' +
+            '<button class="btn-add-confirm">添加</button>' +
+          '</div>';
+        musicPlaylist.appendChild(form);
+
+        form.querySelector('.btn-add-confirm').addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          addSong(
+            form.querySelector('.add-song-title').value,
+            form.querySelector('.add-song-artist').value,
+            form.querySelector('.add-song-url').value
+          );
+          // 清空表单
+          form.querySelector('.add-song-title').value = '';
+          form.querySelector('.add-song-artist').value = '';
+          form.querySelector('.add-song-url').value = '';
+        });
+
+        form.querySelector('.btn-add-cancel').addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          musicPlaylist.classList.remove('show-add');
+        });
+      }
+      musicPlaylist.classList.add('show-add');
+    }
+  });
+
+  // 点击外部关闭播放列表
+  document.addEventListener('click', function (e) {
+    if (!musicPlayer.contains(e.target)) {
+      musicPlayer.classList.remove('playlist-open');
+      musicPlaylist.classList.remove('show-add');
+    }
+  });
+
+  // 初始化
+  updateMusicInfo();
+  updatePlayButton();
+  if (getCurrentSong() && getCurrentSong().url) {
+    createAudio();
+  }
+
   // ==================== Init ====================
 
   renderHome();

@@ -136,6 +136,17 @@ window.AppStore = (function () {
           author: 'me',
         },
       ],
+      playlist: [
+        { id: 'pl1', title: '小幸运', artist: 'Hebe Tien' },
+        { id: 'pl2', title: '往后余生', artist: '马良' },
+        { id: 'pl3', title: '慢慢喜欢你', artist: 'Karen Mok' },
+        { id: 'pl4', title: '就是爱你', artist: 'David Tao' },
+        { id: 'pl5', title: '遇见', artist: 'Stefanie Sun' },
+        { id: 'pl6', title: '告白气球', artist: 'Jay Chou' },
+        { id: 'pl7', title: '刚好遇见你', artist: '李玉刚' },
+        { id: 'pl8', title: '想把我唱给你听', artist: '老狼 / 王婧' },
+      ],
+      currentSongIndex: 0,
     };
   }
 
@@ -181,6 +192,11 @@ window.AppStore = (function () {
             }
           });
         }
+        // 迁移：补上 playlist 字段
+        if (!data.playlist || !Array.isArray(data.playlist)) {
+          data.playlist = getDefaultData().playlist;
+        }
+        if (!data.hasOwnProperty('currentSongIndex')) { data.currentSongIndex = 0; }
         // 迁移：把已勾选的待办移到 completed
         ['me', 'partner', 'shared'].forEach(function (key) {
           if (data.todos && data.todos[key]) {
