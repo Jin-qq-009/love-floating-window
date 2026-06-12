@@ -1558,50 +1558,135 @@
   var isPlaying = false;
   var expanded = false;
 
+  // ===== Web Audio API 内置旋律 =====
+  var melodyCtx = null;
+  var melodyNodes = [];      // 已调度的 oscillator/gain 节点
+  var melodyEndTimer = null; // 旋律结束计时器
+
+  // 每首歌的旋律定义：[MIDI音高, 时长秒]
+  // MIDI: 60=中音C, 62=D, 64=E, 65=F, 67=G, 69=A, 71=B, 72=高音C
+  var BUILTIN_MELODIES = {
+    '小幸运':       [[64,0.45],[66,0.40],[68,0.40],[71,0.70],[69,0.35],[68,0.40],[66,0.40],[64,0.65],[61,0.40],[64,0.40],[66,0.35],[68,0.40],[69,0.95]],
+    '往后余生':     [[60,0.50],[64,0.40],[67,0.45],[67,0.45],[65,0.40],[64,0.50],[60,0.50],[62,0.40],[64,0.70],[64,0.90]],
+    '慢慢喜欢你':   [[67,0.50],[67,0.40],[69,0.40],[67,0.50],[65,0.40],[64,0.60],[62,0.40],[64,0.50],[65,0.40],[67,0.70],[67,0.80]],
+    '就是爱你':     [[64,0.40],[67,0.35],[71,0.35],[69,0.40],[67,0.35],[64,0.50],[62,0.40],[64,0.45],[67,0.35],[69,0.40],[67,0.50],[64,0.80]],
+    '遇见':         [[69,0.50],[71,0.40],[72,0.40],[71,0.50],[69,0.40],[67,0.60],[69,0.40],[71,0.40],[72,0.40],[71,0.50],[69,0.40],[67,0.80]],
+    '告白气球':     [[64,0.35],[66,0.30],[68,0.35],[71,0.45],[69,0.30],[68,0.35],[66,0.30],[64,0.50],[61,0.35],[64,0.30],[66,0.35],[68,0.40],[72,0.70]],
+    '刚好遇见你':   [[60,0.45],[64,0.35],[67,0.40],[67,0.45],[69,0.35],[67,0.50],[64,0.40],[65,0.35],[67,0.40],[60,0.50],[62,0.40],[64,0.70]],
+    '想把我唱给你听': [[67,0.40],[69,0.35],[71,0.45],[72,0.40],[71,0.35],[69,0.50],[67,0.40],[69,0.45],[67,0.40],[65,0.35],[64,0.50],[62,0.40],[64,0.80]],
+  };
+
+  function initMelodyCtx() {
+    if (!melodyCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      melodyCtx = new AC();
+    }
+    if (melodyCtx.state === 'suspended') {
+      melodyCtx.resume().catch(function () {});
+    }
+  }
+
+  function stopMelody() {
+    if (melodyEndTimer) { clearTimeout(melodyEndTimer); melodyEndTimer = null; }
+    melodyNodes.forEach(function (n) {
+      try { n.oscillator.stop(); } catch (e) {}
+      try { n.oscillator.disconnect(); } catch (e) {}
+      try { n.gain.disconnect(); } catch (e) {}
+    });
+    melodyNodes = [];
+  }
+
+  function playBuiltinMelody(title) {
+    initMelodyCtx();
+    stopMelody(); // 先停掉之前的旋律
+
+    var mel = BUILTIN_MELODIES[title];
+    if (!mel) {
+      // 用户自定义歌曲的默认旋律
+      mel = [[64,0.4],[67,0.35],[71,0.35],[69,0.4],[67,0.35],[64,0.45],[62,0.35],[64,0.8]];
+    }
+
+    var now = melodyCtx.currentTime;
+    var t = 0;
+    var totalDur = 0;
+
+    mel.forEach(function (pair) {
+      var note = pair[0], dur = pair[1];
+      var start = now + t;
+
+      // 主旋律（sine wave，柔和）
+      var osc1 = melodyCtx.createOscillator();
+      var g1 = melodyCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.value = 440 * Math.pow(2, (note - 69) / 12);
+      g1.gain.setValueAtTime(0, start);
+      g1.gain.linearRampToValueAtTime(0.11, start + 0.02);
+      g1.gain.setValueAtTime(0.11, start + dur * 0.7);
+      g1.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc1.connect(g1);
+      g1.connect(melodyCtx.destination);
+      osc1.start(start);
+      osc1.stop(start + dur + 0.05);
+      melodyNodes.push({ oscillator: osc1, gain: g1 });
+
+      // 低音和声（triangle wave，低八度，更轻柔）
+      var osc2 = melodyCtx.createOscillator();
+      var g2 = melodyCtx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.value = 440 * Math.pow(2, (note - 12 - 69) / 12);
+      g2.gain.setValueAtTime(0, start);
+      g2.gain.linearRampToValueAtTime(0.04, start + 0.03);
+      g2.gain.exponentialRampToValueAtTime(0.001, start + dur * 0.7);
+      osc2.connect(g2);
+      g2.connect(melodyCtx.destination);
+      osc2.start(start);
+      osc2.stop(start + dur + 0.05);
+      melodyNodes.push({ oscillator: osc2, gain: g2 });
+
+      t += dur;
+      totalDur += dur;
+    });
+
+    // 旋律播完后自动下一首
+    melodyEndTimer = setTimeout(function () {
+      stopMelody();
+      isPlaying = false;
+      updatePlayButton();
+      musicPlayer.classList.remove('playing');
+      if (totalDur > 0.5) playNext();
+    }, totalDur * 1000 + 150);
+  }
+
+  function stopAllAudio() {
+    // 停止 URL 音频
+    if (audio) {
+      try { audio.pause(); } catch (e) {}
+      try { audio.src = ''; } catch (e) {}
+    }
+    // 停止内置旋律
+    stopMelody();
+  }
+
+  // ===== 播放器控制 =====
+
   function savePlaylist() {
     data.playlist = playlist;
     data.currentSongIndex = currentIndex;
     S.saveData(data);
   }
 
-  function createAudio() {
-    if (audio) {
-      try { audio.pause(); } catch (e) {}
-      audio.src = '';
-      audio = null;
-    }
-    audio = new Audio();
-    audio.volume = 0.6;
-
-    audio.addEventListener('ended', function () {
-      playNext();
-    });
-
-    audio.addEventListener('error', function () {
-      // 如果当前歌曲无法播放，尝试下一首
-      var song = playlist[currentIndex];
-      if (song && song.url) {
-        // 标记这首不可用，尝试下一首
-        showToast('无法播放：' + (song.title || '未知歌曲'));
-        playNext();
-      }
-    });
-
-    audio.addEventListener('play', function () {
-      isPlaying = true;
-      updatePlayButton();
-      musicPlayer.classList.add('playing');
-    });
-
-    audio.addEventListener('pause', function () {
-      isPlaying = false;
-      updatePlayButton();
-      musicPlayer.classList.remove('playing');
-    });
-  }
-
   function getCurrentSong() {
     return playlist[currentIndex] || null;
+  }
+
+  function setPlayingState(playing) {
+    isPlaying = playing;
+    updatePlayButton();
+    if (playing) {
+      musicPlayer.classList.add('playing');
+    } else {
+      musicPlayer.classList.remove('playing');
+    }
   }
 
   function updatePlayButton() {
@@ -1686,6 +1771,8 @@
 
   function playSong(idx) {
     if (!playlist[idx]) return;
+    stopAllAudio();
+
     currentIndex = idx;
     savePlaylist();
     updateMusicInfo();
@@ -1693,24 +1780,23 @@
 
     var song = playlist[idx];
 
-    if (!audio) createAudio();
-
     if (song.url) {
+      // 有外部 URL → 用 Audio 元素播放
+      createAudio();
       audio.src = song.url;
       audio.load();
-      audio.play().catch(function (e) {
-        console.warn('播放失败：', e.message);
-        showToast('播放失败，请检查音频链接');
-        isPlaying = false;
-        updatePlayButton();
-        musicPlayer.classList.remove('playing');
+      audio.play().then(function () {
+        setPlayingState(true);
+      }).catch(function (e) {
+        console.warn('URL 播放失败：', e.message);
+        // 回退到内置旋律
+        setPlayingState(true);
+        playBuiltinMelody(song.title);
       });
     } else {
-      // 没有音频链接，仅展示歌曲信息
-      if (audio) { try { audio.pause(); } catch (e) {} }
-      isPlaying = false;
-      updatePlayButton();
-      musicPlayer.classList.remove('playing');
+      // 无 URL → 内置旋律
+      setPlayingState(true);
+      playBuiltinMelody(song.title);
     }
   }
 
@@ -1718,27 +1804,47 @@
     var song = getCurrentSong();
     if (!song) return;
 
-    if (!audio) createAudio();
-
     if (isPlaying) {
-      audio.pause();
+      // 暂停
+      stopAllAudio();
+      setPlayingState(false);
     } else {
-      if (song.url && (!audio.src || audio.src !== song.url)) {
-        audio.src = song.url;
-        audio.load();
-      }
-      if (!song.url) {
-        // 没有音频链接，显示提示
-        showToast('这首歌还没有音频链接，点击歌单 + 添加吧');
-        return;
-      }
-      audio.play().catch(function (e) {
-        console.warn('播放失败：', e.message);
-        isPlaying = false;
-        updatePlayButton();
-        musicPlayer.classList.remove('playing');
-      });
+      // 开始播放
+      playSong(currentIndex);
     }
+  }
+
+  function createAudio() {
+    if (audio) {
+      try { audio.pause(); } catch (e) {}
+      audio.src = '';
+      audio = null;
+    }
+    audio = new Audio();
+    audio.volume = 0.6;
+
+    audio.addEventListener('ended', function () {
+      setPlayingState(false);
+      playNext();
+    });
+
+    audio.addEventListener('error', function () {
+      var s = getCurrentSong();
+      if (s && s.url) {
+        showToast('无法播放：' + (s.title || '未知歌曲') + '，试试内置旋律');
+        // 回退到内置旋律
+        setPlayingState(true);
+        playBuiltinMelody(s.title);
+      }
+    });
+
+    audio.addEventListener('play', function () {
+      setPlayingState(true);
+    });
+
+    audio.addEventListener('pause', function () {
+      setPlayingState(false);
+    });
   }
 
   function playPrev() {
@@ -1768,21 +1874,13 @@
     }
     savePlaylist();
     renderPlaylist();
-    // 如果删除的是当前播放的，切换
-    if (audio && audio.src) {
-      var cur = getCurrentSong();
-      if (cur && cur.url) {
-        audio.src = cur.url;
-        audio.load();
-        if (isPlaying) audio.play().catch(function () {});
-      } else {
-        audio.pause();
-        isPlaying = false;
-        updatePlayButton();
-        musicPlayer.classList.remove('playing');
-      }
-    }
     updateMusicInfo();
+    // 如果删的是当前播放的，切到新的当前曲目
+    var cur = getCurrentSong();
+    if (cur) {
+      stopAllAudio();
+      if (isPlaying) playSong(currentIndex);
+    }
   }
 
   function addSong(title, artist, url) {
@@ -1795,7 +1893,6 @@
     });
     savePlaylist();
     renderPlaylist();
-    // 关闭添加表单
     musicPlaylist.classList.remove('show-add');
   }
 
@@ -1818,7 +1915,6 @@
     if (isOpen) {
       musicPlayer.classList.remove('playlist-open');
     } else {
-      // Ensure expanded first
       if (!expanded) toggleExpanded();
       musicPlayer.classList.add('playlist-open');
       renderPlaylist();
@@ -1842,7 +1938,6 @@
   btnMusicPlay.addEventListener('click', function (e) {
     e.stopPropagation();
     togglePlay();
-    // 如果播放且有 URL，展开
     if (isPlaying && !expanded) toggleExpanded();
   });
 
@@ -1863,7 +1958,6 @@
     if (showAdd) {
       musicPlaylist.classList.remove('show-add');
     } else {
-      // 动态创建添加表单（如果不存在）
       var form = musicPlaylist.querySelector('.music-add-form');
       if (!form) {
         form = document.createElement('div');
@@ -1884,7 +1978,6 @@
             form.querySelector('.add-song-artist').value,
             form.querySelector('.add-song-url').value
           );
-          // 清空表单
           form.querySelector('.add-song-title').value = '';
           form.querySelector('.add-song-artist').value = '';
           form.querySelector('.add-song-url').value = '';
@@ -1910,9 +2003,6 @@
   // 初始化
   updateMusicInfo();
   updatePlayButton();
-  if (getCurrentSong() && getCurrentSong().url) {
-    createAudio();
-  }
 
   // ==================== Init ====================
 
