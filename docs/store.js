@@ -31,6 +31,8 @@ window.AppStore = (function () {
         date: '2026-06-24',
         location: '北京南站',
         note: '周五晚上到，记得提前看天气。',
+        updatedBy: 'me',
+        updatedAt: '12:10',
       },
       status: {
         me: {
@@ -149,6 +151,9 @@ window.AppStore = (function () {
         // 迁移：补上 avatarImage 字段
         if (!data.me.hasOwnProperty('avatarImage')) { data.me.avatarImage = null; }
         if (!data.partner.hasOwnProperty('avatarImage')) { data.partner.avatarImage = null; }
+        // 迁移：补上 meetup.updatedBy / updatedAt 字段
+        if (data.meetup && !data.meetup.hasOwnProperty('updatedBy')) { data.meetup.updatedBy = null; }
+        if (data.meetup && !data.meetup.hasOwnProperty('updatedAt')) { data.meetup.updatedAt = null; }
         // 迁移：把已勾选的待办移到 completed
         ['me', 'partner', 'shared'].forEach(function (key) {
           if (data.todos && data.todos[key]) {

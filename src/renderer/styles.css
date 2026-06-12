@@ -327,6 +327,29 @@ body {
   line-height: 1.5;
 }
 
+/* 见面修改者标注 */
+.meetup-author {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--muted-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.meetup-author .author-name {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+.meetup-author .author-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--muted-soft);
+  display: inline-block;
+}
+
 /* — Map Route — */
 .map-route {
   width: 100%;
@@ -465,6 +488,17 @@ body {
   border: 1px solid var(--line);
   background: rgba(255,255,255,.9);
   box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-note::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand), var(--color-partner));
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
 }
 
 .quote {
@@ -488,12 +522,20 @@ body {
 
 .status-card {
   padding: var(--sp-4);
+  padding-left: var(--sp-5);
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
   background: rgba(255,255,255,.9);
   box-shadow: var(--shadow-sm);
   position: relative;
   transition: box-shadow var(--t-base);
+  border-left: 4px solid var(--line);
+}
+.status-card#myStatusCard {
+  border-left-color: var(--color-me);
+}
+.status-card#partnerStatusCard {
+  border-left-color: var(--color-partner);
 }
 .status-card:hover {
   box-shadow: var(--shadow-md);
@@ -620,6 +662,26 @@ body {
   color: var(--ink-soft);
   font-size: var(--fs-sm);
   line-height: 1.5;
+  cursor: default;
+}
+
+.todo-preview .completed-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+
+.todo-preview .completed-hint:hover {
+  background: #d0ead8;
 }
 
 input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--brand); }
@@ -629,6 +691,11 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--brand); 
   padding: var(--sp-3);
   border-radius: var(--r-md);
   background: var(--paper);
+  transition: background var(--t-fast);
+}
+
+.memory-mini:hover {
+  background: var(--brand-soft);
 }
 
 .memory-mini + .memory-mini { margin-top: var(--sp-2); }

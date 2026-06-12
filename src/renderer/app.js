@@ -145,6 +145,18 @@
       : '暂无见面计划';
     document.getElementById('meetupInfo').textContent = meetupInfo;
 
+    // 见面修改者标注
+    var meetupAuthorEl = document.getElementById('meetupAuthor');
+    if (data.meetup && data.meetup.updatedBy) {
+      var authorName = data.meetup.updatedBy === 'me' ? data.me.name : data.partner.name;
+      var authorColor = data.meetup.updatedBy === 'me' ? 'var(--color-me)' : 'var(--color-partner)';
+      meetupAuthorEl.innerHTML = '<span class="author-name" style="color:' + authorColor + '">' + escapeHTML(authorName) + '</span> 修改了见面计划' +
+        (data.meetup.updatedAt ? '<span class="author-dot"></span>' + escapeHTML(data.meetup.updatedAt) : '');
+      meetupAuthorEl.style.display = '';
+    } else {
+      meetupAuthorEl.style.display = 'none';
+    }
+
     // 最新留言
     var latestMsgEl = document.getElementById('latestMessage');
     var latestMetaEl = document.getElementById('latestMessageMeta');
@@ -209,8 +221,11 @@
       }
       if (completedCount > 0) {
         var completedHint = document.createElement('p');
-        completedHint.style.cssText = 'margin-top:8px;font-size:12px;color:var(--muted-soft)';
-        completedHint.textContent = '已完成 ' + completedCount + ' 项';
+        completedHint.className = 'completed-hint';
+        completedHint.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 12L3 9l1.4-1.4L6 9.2l5.6-5.6L13 5l-7 7z" fill="currentColor"/></svg> 已完成 ' + completedCount + ' 项，点击查看';
+        completedHint.addEventListener('click', function () {
+          setView('todos');
+        });
         previewEl.appendChild(completedHint);
       }
     }
@@ -285,9 +300,16 @@
 
   // ==================== Timeline Toggle ====================
 
-  var timelineCollapsed = false;
+  var timelineCollapsed = true;
   var btnToggleTimeline = document.getElementById('btnToggleTimeline');
   var timelineContent = document.getElementById('timelineContent');
+
+  // 默认收起
+  timelineContent.style.maxHeight = '0';
+  timelineContent.style.overflow = 'hidden';
+  btnToggleTimeline.classList.add('collapsed');
+  btnToggleTimeline.setAttribute('aria-expanded', 'false');
+  btnToggleTimeline.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 展开';
 
   btnToggleTimeline.addEventListener('click', function () {
     timelineCollapsed = !timelineCollapsed;
@@ -516,6 +538,10 @@
     if (date) data.meetup.date = date;
     if (location) data.meetup.location = location;
     if (note) data.meetup.note = note;
+
+    // 记录修改者
+    data.meetup.updatedBy = 'me';
+    data.meetup.updatedAt = S.getNowTimeStr();
 
     data.timeline.unshift({
       id: S.genId(),
@@ -1223,6 +1249,15 @@
     data.meetup.date = document.getElementById('settingMeetupDate').value || data.meetup.date;
     data.meetup.location = document.getElementById('settingMeetupLocation').value.trim() || data.meetup.location;
     data.meetup.note = document.getElementById('settingMeetupNote').value.trim() || data.meetup.note;
+
+    // 如果见面计划有变动，记录修改者
+    var newDate = document.getElementById('settingMeetupDate').value;
+    var newLocation = document.getElementById('settingMeetupLocation').value.trim();
+    var newNote = document.getElementById('settingMeetupNote').value.trim();
+    if (newDate || newLocation || newNote) {
+      data.meetup.updatedBy = 'me';
+      data.meetup.updatedAt = S.getNowTimeStr();
+    }
 
     S.saveData(data);
     renderHome();
