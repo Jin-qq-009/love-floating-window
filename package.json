@@ -1,0 +1,15 @@
+{
+  "name": "love-floating-window",
+  "version": "0.1.0",
+  "description": "我们的小窗 - 异地情侣桌面同步工具",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "dev": "electron . --no-sandbox --dev"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^42.4.0"
+  }
+}

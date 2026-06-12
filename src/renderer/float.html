@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>我们的小窗 - 悬浮窗</title>
+  <style>
+    :root {
+      --ink: #2b2430;
+      --muted: #81717e;
+      --pink: #e85d91;
+      --pink-dark: #d9467e;
+      --pink-soft: #ffe3ee;
+      --peach: #ffb08a;
+      --lilac: #a987df;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: transparent; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+    .float-window {
+      width: 148px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid rgba(232,93,145,.22);
+      border-radius: 14px;
+      color: var(--ink);
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 18px 44px rgba(151,82,113,.22);
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+      user-select: none;
+    }
+
+    .mini-icon {
+      width: 30px; height: 30px;
+      position: relative;
+      display: grid; place-items: center;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #ff8db7, #e85d91);
+      flex: 0 0 auto;
+    }
+
+    .mini-icon span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+    }
+
+    .mini-icon span:first-child { left: 7px; top: 11px; }
+    .mini-icon span:last-child { right: 7px; bottom: 10px; }
+
+    .mini-icon i {
+      width: 17px; height: 2px;
+      background: rgba(255,255,255,.9);
+      transform: rotate(32deg);
+    }
+
+    .float-window strong {
+      font-size: 14px;
+      color: var(--pink-dark);
+    }
+
+    /* 悬浮窗隐藏态 */
+    .float-expanded {
+      display: none;
+      width: 230px;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(232,93,145,.22);
+      border-radius: 16px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 18px 44px rgba(151,82,113,.22);
+      margin-top: 8px;
+    }
+
+    .float-expanded h2 { font-size: 15px; margin: 0; }
+    .float-expanded p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+    .float-expanded strong { color: var(--pink-dark); }
+
+    .expanded .float-expanded { display: grid; }
+
+    /* 拖拽区域 */
+    .drag-region {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 48px;
+      -webkit-app-region: drag;
+      cursor: grab;
+    }
+  </style>
+</head>
+<body>
+  <div class="drag-region"></div>
+  <div class="float-window" id="floatBtn">
+    <div class="mini-icon" aria-hidden="true">
+      <span></span><i></i><span></span>
+    </div>
+    <strong id="floatMeetupDays">见面 -- 天</strong>
+  </div>
+
+  <div class="float-expanded" id="floatExpanded">
+    <div class="mini-icon" aria-hidden="true">
+      <span></span><i></i><span></span>
+    </div>
+    <div>
+      <h2>我们的小窗</h2>
+      <p>距离见面还有 <strong id="floatDays">--</strong> 天</p>
+      <p id="floatPartnerStatus">--</p>
+    </div>
+  </div>
+
+  <script src="./store.js"></script>
+  <script>
+    (function () {
+      const S = window.AppStore;
+      let isExpanded = false;
+      let isDragging = false;
+      let lastPos = { x: 0, y: 0 };
+
+      const floatBtn = document.getElementById('floatBtn');
+      const floatExpanded = document.getElementById('floatExpanded');
+
+      function refresh() {
+        const data = S.loadData();
+        const days = S.getMeetupDays(data.meetup);
+
+        document.getElementById('floatMeetupDays').textContent = '见面 ' + (days !== null ? days : '--') + ' 天';
+        document.getElementById('floatDays').textContent = days !== null ? days : '--';
+
+        const p = data.status.partner;
+        document.getElementById('floatPartnerStatus').textContent =
+          data.partner.name + '：' + p.mood + ' · ' + p.quickStatus;
+      }
+
+      // 点击展开/收起
+      floatBtn.addEventListener('click', (e) => {
+        if (isDragging) return;
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+          floatExpanded.style.display = 'grid';
+          if (window.electronAPI) window.electronAPI.floatResize(true);
+        } else {
+          floatExpanded.style.display = 'none';
+          if (window.electronAPI) window.electronAPI.floatResize(false);
+        }
+      });
+
+      // 双击打开主窗口
+      floatBtn.addEventListener('dblclick', () => {
+        if (window.electronAPI) window.electronAPI.openMainWindow();
+      });
+
+      // 拖拽
+      const dragRegion = document.querySelector('.drag-region');
+
+      dragRegion.addEventListener('mousedown', (e) => {
+        isDragging = false;
+        lastPos = { x: e.screenX, y: e.screenY };
+
+        const onMouseMove = (e2) => {
+          const dx = e2.screenX - lastPos.x;
+          const dy = e2.screenY - lastPos.y;
+          if (Math.abs(dx) > 2 || Math.abs(dy) > 2) isDragging = true;
+          if (isDragging && window.electronAPI) {
+            window.electronAPI.floatMove({ deltaX: dx, deltaY: dy });
+          }
+          lastPos = { x: e2.screenX, y: e2.screenY };
+        };
+
+        const onMouseUp = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+          if (isDragging && window.electronAPI) {
+            window.electronAPI.floatSnap();
+          }
+          setTimeout(() => { isDragging = false; }, 50);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      // 定时刷新（30秒）
+      setInterval(refresh, 30000);
+
+      // 监听数据更新
+      if (window.electronAPI && window.electronAPI.onDataUpdated) {
+        window.electronAPI.onDataUpdated(refresh);
+      }
+
+      // 初始渲染
+      refresh();
+    })();
+  </script>
+</body>
+</html>
