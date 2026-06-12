@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="pink-translucent">
   <meta name="theme-color" content="#e85d91">
   <title>我们的小窗</title>
-  <link rel="stylesheet" href="./leaflet.css?v=2">
-  <link rel="stylesheet" href="./styles.css?v=2">
+  <link rel="stylesheet" href="./leaflet.css?v=3">
+  <link rel="stylesheet" href="./styles.css?v=3">
   <style>
     /* 网页版适配 */
     html, body { height: 100%; margin: 0; padding: 0; }
@@ -254,7 +254,7 @@
     </section>
   </section>
 
-  <!-- ===== 弹窗：更新状态 ===== -->
+  <!-- ===== 弹窗区域（放在 body 直接子级，避免被 app-window 层叠上下文限制） ===== -->
   <div class="modal-overlay" id="modalStatus">
     <div class="modal">
       <div class="modal-header">
@@ -361,9 +361,9 @@
     </div>
   </div>
 
-  <script src="./store.js?v=2"></script>
-  <script src="./leaflet.js?v=2"></script>
-  <script src="./map.js?v=2"></script>
-  <script src="./app.js?v=2"></script>
+  <script src="./store.js?v=3"></script>
+  <script src="./leaflet.js?v=3"></script>
+  <script src="./map.js?v=3"></script>
+  <script src="./app.js?v=3"></script>
 </body>
 </html>
