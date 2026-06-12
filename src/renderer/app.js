@@ -160,7 +160,7 @@
 
     // 我的状态
     var myS = data.status.me;
-    document.getElementById('myAvatar').textContent = data.me.avatar;
+    renderAvatar(document.getElementById('myAvatar'), data.me);
     document.getElementById('myName').textContent = data.me.name;
     document.getElementById('myStatusText').textContent = myS.quickStatus + ' · ' + myS.freeText.substring(0, 6);
     var myMoodPill = document.getElementById('myMoodPill');
@@ -170,7 +170,7 @@
 
     // 对方状态
     var pS = data.status.partner;
-    document.getElementById('partnerAvatar').textContent = data.partner.avatar;
+    renderAvatar(document.getElementById('partnerAvatar'), data.partner);
     document.getElementById('partnerName').textContent = data.partner.name;
     document.getElementById('partnerStatusText').textContent = pS.quickStatus + ' · ' + pS.freeText.substring(0, 6);
     var pMoodPill = document.getElementById('partnerMoodPill');
@@ -539,9 +539,9 @@
     // 确保数据结构完整
     if (!data.completed) data.completed = { me: [], partner: [], shared: [] };
 
-    document.getElementById('todoMyAvatar').textContent = data.me.avatar;
+    renderAvatar(document.getElementById('todoMyAvatar'), data.me);
     document.getElementById('todoMyName').textContent = data.me.name + '的待办';
-    document.getElementById('todoPartnerAvatar').textContent = data.partner.avatar;
+    renderAvatar(document.getElementById('todoPartnerAvatar'), data.partner);
     document.getElementById('todoPartnerName').textContent = data.partner.name + '的待办';
 
     renderTodoList('myTodoList', data.todos.me, 'me');
@@ -827,6 +827,325 @@
     showToast('纪念日已添加');
   });
 
+  // ==================== Avatar Module ====================
+
+  // 全局头像渲染函数：根据 avatarImage 类型渲染到 .avatar 元素
+  function renderAvatar(el, personData) {
+    if (!el) return;
+    var img = personData.avatarImage;
+    // 清空之前的内容
+    el.innerHTML = '';
+    el.style.background = '';
+    el.style.backgroundImage = '';
+    el.style.backgroundSize = '';
+
+    if (img && img.startsWith('emoji:')) {
+      // emoji 头像
+      var emoji = img.substring(6);
+      el.textContent = '';
+      el.style.background = 'var(--surface)';
+      el.style.border = '2px solid var(--line)';
+      var span = document.createElement('span');
+      span.className = 'avatar-emoji';
+      span.textContent = emoji;
+      el.appendChild(span);
+    } else if (img && img.startsWith('data:image')) {
+      // 自定义图片头像
+      var imgEl = document.createElement('img');
+      imgEl.className = 'avatar-img';
+      imgEl.src = img;
+      imgEl.alt = personData.name;
+      el.textContent = '';
+      el.style.background = 'transparent';
+      el.appendChild(imgEl);
+    } else {
+      // 文字头像（默认）
+      var colorClass = personData.avatarColor || (personData === data.me ? 'blush' : 'lilac');
+      el.textContent = personData.avatar || personData.name.charAt(0);
+      el.className = el.className.replace(/\b(blush|lilac|sunset|ocean|mint|rose|sky|cocoa)\b/g, '').trim();
+      el.classList.add(colorClass);
+    }
+  }
+
+  // 渲染所有头像显示点
+  function renderAllAvatars() {
+    // 首页状态卡
+    renderAvatar(document.getElementById('myAvatar'), data.me);
+    renderAvatar(document.getElementById('partnerAvatar'), data.partner);
+    // 待办页
+    renderAvatar(document.getElementById('todoMyAvatar'), data.me);
+    renderAvatar(document.getElementById('todoPartnerAvatar'), data.partner);
+    // 设置页
+    renderAvatar(document.getElementById('myAvatarSetting'), data.me);
+    renderAvatar(document.getElementById('partnerAvatarSetting'), data.partner);
+    // 设置页名称
+    var myAvatarName = document.getElementById('myAvatarName');
+    var partnerAvatarName = document.getElementById('partnerAvatarName');
+    if (myAvatarName) myAvatarName.textContent = data.me.name;
+    if (partnerAvatarName) partnerAvatarName.textContent = data.partner.name;
+  }
+
+  // 头像弹窗状态
+  var avatarEditTarget = 'me'; // 'me' | 'partner'
+  var avatarSelectedEmoji = null;
+  var avatarSelectedColor = null;
+  var avatarUploadedImage = null;
+
+  function openAvatarModal(target) {
+    avatarEditTarget = target;
+    var person = target === 'me' ? data.me : data.partner;
+    var currentImg = person.avatarImage;
+
+    // 重置状态
+    avatarSelectedEmoji = null;
+    avatarSelectedColor = null;
+    avatarUploadedImage = null;
+
+    // 设置弹窗标题
+    document.getElementById('modalAvatarTitle').textContent = '修改' + (target === 'me' ? '我的' : ' TA 的') + '头像';
+
+    // 渲染当前头像预览
+    var preview = document.getElementById('avatarModalCurrent');
+    preview.className = 'avatar avatar-xl';
+    renderAvatar(preview, person);
+
+    // 渲染 emoji 网格
+    var emojiGrid = document.getElementById('avatarEmojiGrid');
+    emojiGrid.innerHTML = '';
+    S.AVATAR_PRESETS.forEach(function (emoji) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'avatar-emoji-item';
+      if (currentImg === 'emoji:' + emoji) {
+        item.classList.add('selected');
+        avatarSelectedEmoji = emoji;
+      }
+      item.textContent = emoji;
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', currentImg === 'emoji:' + emoji ? 'true' : 'false');
+      item.addEventListener('click', function () {
+        emojiGrid.querySelectorAll('.avatar-emoji-item').forEach(function (i) {
+          i.classList.remove('selected');
+          i.setAttribute('aria-selected', 'false');
+        });
+        item.classList.add('selected');
+        item.setAttribute('aria-selected', 'true');
+        avatarSelectedEmoji = emoji;
+        avatarUploadedImage = null;
+        // 实时预览
+        preview.innerHTML = '';
+        preview.style.background = 'var(--surface)';
+        preview.style.border = '2px solid var(--line)';
+        preview.textContent = '';
+        var span = document.createElement('span');
+        span.className = 'avatar-emoji';
+        span.textContent = emoji;
+        preview.appendChild(span);
+      });
+      emojiGrid.appendChild(item);
+    });
+
+    // 渲染颜色网格
+    var colorGrid = document.getElementById('avatarColorGrid');
+    colorGrid.innerHTML = '';
+    S.AVATAR_BG_COLORS.forEach(function (c) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'avatar-color-item';
+      if (!currentImg && person.avatarColor === c.key) {
+        item.classList.add('selected');
+        avatarSelectedColor = c.key;
+      }
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', (!currentImg && person.avatarColor === c.key) ? 'true' : 'false');
+      var swatch = document.createElement('div');
+      swatch.className = 'avatar-color-swatch';
+      swatch.style.background = c.value;
+      var label = document.createElement('span');
+      label.className = 'avatar-color-label';
+      label.textContent = c.label;
+      item.appendChild(swatch);
+      item.appendChild(label);
+      item.addEventListener('click', function () {
+        colorGrid.querySelectorAll('.avatar-color-item').forEach(function (i) {
+          i.classList.remove('selected');
+          i.setAttribute('aria-selected', 'false');
+        });
+        item.classList.add('selected');
+        item.setAttribute('aria-selected', 'true');
+        avatarSelectedColor = c.key;
+        avatarSelectedEmoji = null;
+        avatarUploadedImage = null;
+        // 实时预览
+        preview.className = 'avatar avatar-xl ' + c.key;
+        preview.innerHTML = '';
+        preview.style.background = '';
+        preview.style.border = '';
+        preview.textContent = person.avatar || person.name.charAt(0);
+      });
+      colorGrid.appendChild(item);
+    });
+
+    // 重置上传区域
+    document.getElementById('avatarUploadPreview').style.display = 'none';
+    document.getElementById('avatarUploadArea').style.display = '';
+    document.getElementById('avatarFileInput').value = '';
+
+    // 切换到对应面板
+    var initialTab = 'text';
+    if (currentImg && currentImg.startsWith('emoji:')) initialTab = 'emoji';
+    else if (currentImg && currentImg.startsWith('data:image')) initialTab = 'upload';
+    switchAvatarTab(initialTab);
+
+    openModal('modalAvatar');
+  }
+
+  function switchAvatarTab(type) {
+    document.querySelectorAll('.avatar-type-tab').forEach(function (tab) {
+      var isActive = tab.dataset.type === type;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    document.getElementById('avatarPanelEmoji').classList.toggle('active', type === 'emoji');
+    document.getElementById('avatarPanelText').classList.toggle('active', type === 'text');
+    document.getElementById('avatarPanelUpload').classList.toggle('active', type === 'upload');
+  }
+
+  // 设置页头像卡片点击
+  document.querySelectorAll('.avatar-edit-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      openAvatarModal(card.dataset.person);
+    });
+  });
+
+  // 头像类型切换
+  document.querySelectorAll('.avatar-type-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      switchAvatarTab(tab.dataset.type);
+    });
+  });
+
+  // 图片上传
+  var uploadArea = document.getElementById('avatarUploadArea');
+  var fileInput = document.getElementById('avatarFileInput');
+
+  uploadArea.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  uploadArea.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  // 拖拽上传
+  uploadArea.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', function () {
+    uploadArea.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', function (e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    var files = e.dataTransfer.files;
+    if (files.length > 0) handleAvatarFile(files[0]);
+  });
+
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files.length > 0) handleAvatarFile(fileInput.files[0]);
+  });
+
+  function handleAvatarFile(file) {
+    if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/)) {
+      showToast('请选择图片文件');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('图片大小不能超过 2MB');
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      // 压缩图片为 200x200 的 base64
+      var img = new Image();
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        var size = 200;
+        canvas.width = size;
+        canvas.height = size;
+        var ctx = canvas.getContext('2d');
+        // 居中裁切为正方形
+        var sw = img.width, sh = img.height;
+        var sx = 0, sy = 0;
+        if (sw > sh) { sx = (sw - sh) / 2; sw = sh; }
+        else { sy = (sh - sw) / 2; sh = sw; }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+        avatarUploadedImage = dataUrl;
+        avatarSelectedEmoji = null;
+
+        // 显示上传预览
+        document.getElementById('avatarUploadArea').style.display = 'none';
+        document.getElementById('avatarUploadPreview').style.display = 'block';
+        document.getElementById('avatarUploadImg').src = dataUrl;
+
+        // 实时预览
+        var preview = document.getElementById('avatarModalCurrent');
+        preview.className = 'avatar avatar-xl';
+        preview.innerHTML = '';
+        preview.style.background = 'transparent';
+        var imgEl = document.createElement('img');
+        imgEl.className = 'avatar-img';
+        imgEl.src = dataUrl;
+        preview.appendChild(imgEl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 移除上传图片
+  document.getElementById('avatarUploadRemove').addEventListener('click', function () {
+    avatarUploadedImage = null;
+    document.getElementById('avatarUploadPreview').style.display = 'none';
+    document.getElementById('avatarUploadArea').style.display = '';
+    document.getElementById('avatarFileInput').value = '';
+    // 恢复默认预览
+    var person = avatarEditTarget === 'me' ? data.me : data.partner;
+    var preview = document.getElementById('avatarModalCurrent');
+    preview.className = 'avatar avatar-xl';
+    renderAvatar(preview, person);
+  });
+
+  // 保存头像
+  document.getElementById('btnSaveAvatar').addEventListener('click', function () {
+    var person = avatarEditTarget === 'me' ? data.me : data.partner;
+
+    if (avatarSelectedEmoji) {
+      person.avatarImage = 'emoji:' + avatarSelectedEmoji;
+    } else if (avatarUploadedImage) {
+      person.avatarImage = avatarUploadedImage;
+    } else if (avatarSelectedColor) {
+      // 文字头像 + 颜色
+      person.avatarImage = null;
+      person.avatarColor = avatarSelectedColor;
+    }
+    // 如果没选择任何东西，保持当前状态不变
+
+    S.saveData(data);
+    closeModal('modalAvatar');
+    renderAllAvatars();
+    renderHome();
+    if (views.todos.classList.contains('active')) renderTodos();
+    showToast('头像已更新');
+  });
+
   // ==================== Settings ====================
 
   function fillSettings() {
@@ -836,6 +1155,12 @@
     document.getElementById('settingMeetupDate').value = data.meetup.date || '';
     document.getElementById('settingMeetupLocation').value = data.meetup.location || '';
     document.getElementById('settingMeetupNote').value = data.meetup.note || '';
+
+    // 更新头像显示
+    renderAvatar(document.getElementById('myAvatarSetting'), data.me);
+    renderAvatar(document.getElementById('partnerAvatarSetting'), data.partner);
+    document.getElementById('myAvatarName').textContent = data.me.name;
+    document.getElementById('partnerAvatarName').textContent = data.partner.name;
 
     // 更新城市选择器显示
     var myCityDisplay = document.getElementById('myCityDisplay');
@@ -874,7 +1199,8 @@
 
     if (myName) {
       data.me.name = myName;
-      data.me.avatar = myName.charAt(0);
+      // 只在文字头像模式下更新首字
+      if (!data.me.avatarImage) data.me.avatar = myName.charAt(0);
     }
     if (myCity) {
       data.me.city = myCity;
@@ -885,7 +1211,7 @@
     }
     if (partnerName) {
       data.partner.name = partnerName;
-      data.partner.avatar = partnerName.charAt(0);
+      if (!data.partner.avatarImage) data.partner.avatar = partnerName.charAt(0);
     }
     if (partnerCity) {
       data.partner.city = partnerCity;

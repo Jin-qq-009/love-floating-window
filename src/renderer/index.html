@@ -237,6 +237,36 @@
       </div>
 
       <div class="settings-list">
+        <!-- 头像编辑区域 -->
+        <div class="settings-item avatar-section" style="grid-column: 1 / -1">
+          <div class="avatar-edit-row">
+            <div class="avatar-edit-card" data-person="me">
+              <div class="avatar-preview" id="myAvatarPreview" tabindex="0" role="button" aria-label="修改我的头像">
+                <div class="avatar blush avatar-lg" id="myAvatarSetting">倩</div>
+                <div class="avatar-edit-badge">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.3 3.1l-1-1a1.4 1.4 0 00-2 0l-.7.7 3 3 .7-.7a1.4 1.4 0 000-2zM4 9.3L10.3 3l3 3L7 12.3l-3 1 1-3z" fill="currentColor"/></svg>
+                </div>
+              </div>
+              <div class="avatar-edit-info">
+                <strong id="myAvatarName">倩倩</strong>
+                <span>点击修改头像</span>
+              </div>
+            </div>
+            <div class="avatar-edit-card" data-person="partner">
+              <div class="avatar-preview" id="partnerAvatarPreview" tabindex="0" role="button" aria-label="修改TA的头像">
+                <div class="avatar lilac avatar-lg" id="partnerAvatarSetting">胖</div>
+                <div class="avatar-edit-badge">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.3 3.1l-1-1a1.4 1.4 0 00-2 0l-.7.7 3 3 .7-.7a1.4 1.4 0 000-2zM4 9.3L10.3 3l3 3L7 12.3l-3 1 1-3z" fill="currentColor"/></svg>
+                </div>
+              </div>
+              <div class="avatar-edit-info">
+                <strong id="partnerAvatarName">胖胖磨叽</strong>
+                <span>点击修改头像</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="settings-item">
           <label>我的昵称</label>
           <input type="text" id="settingMyName" placeholder="输入昵称">
@@ -442,6 +472,61 @@
       <div class="modal-footer">
         <button class="secondary-btn" type="button" data-close-modal>取消</button>
         <button class="primary-btn" type="button" id="btnSaveMemory">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：编辑头像 -->
+  <div class="modal-overlay" id="modalAvatar" role="dialog" aria-modal="true" aria-labelledby="modalAvatarTitle">
+    <div class="modal" style="width:min(460px,90vw)">
+      <div class="modal-header">
+        <h3 id="modalAvatarTitle">修改头像</h3>
+        <button class="modal-close" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- 当前头像预览 -->
+        <div class="avatar-modal-preview">
+          <div class="avatar avatar-xl" id="avatarModalCurrent">倩</div>
+        </div>
+
+        <!-- 头像类型切换 -->
+        <div class="avatar-type-tabs" role="tablist" aria-label="头像类型">
+          <button class="avatar-type-tab active" data-type="emoji" role="tab" aria-selected="true">emoji 头像</button>
+          <button class="avatar-type-tab" data-type="text" role="tab" aria-selected="false">文字头像</button>
+          <button class="avatar-type-tab" data-type="upload" role="tab" aria-selected="false">上传图片</button>
+        </div>
+
+        <!-- emoji 选择 -->
+        <div class="avatar-panel active" id="avatarPanelEmoji">
+          <p class="avatar-panel-hint">选择一个 emoji 作为头像</p>
+          <div class="avatar-emoji-grid" id="avatarEmojiGrid" role="listbox" aria-label="emoji列表"></div>
+        </div>
+
+        <!-- 文字头像：颜色选择 -->
+        <div class="avatar-panel" id="avatarPanelText">
+          <p class="avatar-panel-hint">选择背景颜色（头像文字取昵称首字）</p>
+          <div class="avatar-color-grid" id="avatarColorGrid" role="listbox" aria-label="颜色列表"></div>
+        </div>
+
+        <!-- 上传图片 -->
+        <div class="avatar-panel" id="avatarPanelUpload">
+          <p class="avatar-panel-hint">上传一张图片作为头像</p>
+          <div class="avatar-upload-area" id="avatarUploadArea" role="button" tabindex="0" aria-label="点击或拖拽上传图片">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="16" r="8" stroke="currentColor" stroke-width="2"/><path d="M6 34c0-7.7 6.3-14 14-14s14 6.3 14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 8V2M17 5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>点击选择图片</span>
+            <span class="avatar-upload-hint">支持 JPG / PNG，建议正方形</span>
+          </div>
+          <input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
+          <!-- 上传预览 -->
+          <div class="avatar-upload-preview" id="avatarUploadPreview" style="display:none">
+            <img id="avatarUploadImg" alt="上传预览">
+            <button class="avatar-upload-remove" type="button" id="avatarUploadRemove" aria-label="移除图片">&times;</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" type="button" data-close-modal>取消</button>
+        <button class="primary-btn" type="button" id="btnSaveAvatar">保存</button>
       </div>
     </div>
   </div>

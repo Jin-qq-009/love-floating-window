@@ -13,6 +13,7 @@ window.AppStore = (function () {
         name: '倩倩',
         avatar: '倩',
         avatarColor: 'blush',
+        avatarImage: null,
         city: '诸暨',
         lat: 29.7069,
         lng: 120.2362,
@@ -21,6 +22,7 @@ window.AppStore = (function () {
         name: '胖胖磨叽',
         avatar: '胖',
         avatarColor: 'lilac',
+        avatarImage: null,
         city: '北京',
         lat: 39.9042,
         lng: 116.4074,
@@ -144,6 +146,9 @@ window.AppStore = (function () {
         if (data.partner.avatar === '远') { data.partner.avatar = '胖'; }
         // 迁移：补上 completed 字段
         if (!data.completed) { data.completed = { me: [], partner: [], shared: [] }; }
+        // 迁移：补上 avatarImage 字段
+        if (!data.me.hasOwnProperty('avatarImage')) { data.me.avatarImage = null; }
+        if (!data.partner.hasOwnProperty('avatarImage')) { data.partner.avatarImage = null; }
         // 迁移：把已勾选的待办移到 completed
         ['me', 'partner', 'shared'].forEach(function (key) {
           if (data.todos && data.todos[key]) {
@@ -266,10 +271,30 @@ window.AppStore = (function () {
     return Math.round(R * c);
   }
 
+  // 预设头像 Emoji 列表
+  var AVATAR_PRESETS = [
+    '🐱','🐶','🐰','🐻','🦊','🐼','🐨','🐸',
+    '🌸','🌙','⭐','🎀','💎','🌈','☀️','🍀',
+    '🧸','🐧','🦋','🐳','🦄','🌺','🍓','🍕',
+  ];
+
+  // 预设头像背景色
+  var AVATAR_BG_COLORS = [
+    { key: 'blush',  label: '玫粉', value: 'var(--color-me)' },
+    { key: 'lilac',  label: '紫藤', value: 'var(--color-partner)' },
+    { key: 'sunset', label: '日落', value: '#f78c35' },
+    { key: 'ocean',  label: '海洋', value: '#5b6abf' },
+    { key: 'mint',   label: '薄荷', value: '#5ec6a0' },
+    { key: 'rose',   label: '玫瑰', value: '#f5a0b8' },
+    { key: 'sky',    label: '天空', value: '#5b9bd5' },
+    { key: 'cocoa',  label: '可可', value: '#a0785a' },
+  ];
+
   return {
     loadData, saveData, getDefaultData, getMeetupDays,
     genId, getNowTimeStr, getNowDateStr,
     MOODS, CUSTOM_MOODS, QUICK_STATUSES, MOOD_COLORS,
     CITY_COORDS, getCityCoords, calcDistance,
+    AVATAR_PRESETS, AVATAR_BG_COLORS,
   };
 })();

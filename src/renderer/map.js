@@ -11,17 +11,30 @@ window.AppMap = (function () {
   var currentTileLayer = null;
 
   /**
-   * 创建带城市名标签的标记图标
+   * 创建带城市名标签的标记图标（支持文字/emoji/图片头像）
    */
-  function createMarkerIcon(type, avatar, cityName) {
+  function createMarkerIcon(type, avatarData) {
     var color = type === 'me' ? '#e85d91' : '#a987df';
     var bgColor = type === 'me' ? '#ffe3ee' : '#f0e6ff';
+    var avatar = avatarData.avatar || avatarData.name.charAt(0);
+    var cityName = avatarData.city || (type === 'me' ? '我' : 'TA');
+    var avatarImg = avatarData.avatarImage;
+    var avatarHtml = '';
+
+    if (avatarImg && avatarImg.startsWith('emoji:')) {
+      var emoji = avatarImg.substring(6);
+      avatarHtml = '<span style="font-size:15px;font-style:normal">' + emoji + '</span>';
+    } else if (avatarImg && avatarImg.startsWith('data:image')) {
+      avatarHtml = '<img src="' + avatarImg + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="' + avatarData.name + '">';
+    } else {
+      avatarHtml = avatar;
+    }
 
     return L.divIcon({
       className: '',
       html:
         '<div class="custom-marker-wrap">' +
-          '<div class="map-marker ' + type + '">' + avatar + '</div>' +
+          '<div class="map-marker ' + type + '">' + avatarHtml + '</div>' +
           '<div class="marker-label" style="background:' + bgColor + ';color:' + color + ';border-color:' + color + '">' +
             cityName +
           '</div>' +
@@ -169,7 +182,7 @@ window.AppMap = (function () {
 
     // 我的位置 - 带城市名标签
     meMarker = L.marker([meLat, meLng], {
-      icon: createMarkerIcon('me', data.me.avatar, meCity),
+      icon: createMarkerIcon('me', data.me),
     }).addTo(map);
     meMarker.bindPopup(
       '<div style="text-align:center">' +
@@ -180,7 +193,7 @@ window.AppMap = (function () {
 
     // TA 的位置 - 带城市名标签
     partnerMarker = L.marker([pLat, pLng], {
-      icon: createMarkerIcon('partner', data.partner.avatar, pCity),
+      icon: createMarkerIcon('partner', data.partner),
     }).addTo(map);
     partnerMarker.bindPopup(
       '<div style="text-align:center">' +
