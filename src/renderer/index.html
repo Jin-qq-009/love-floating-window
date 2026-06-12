@@ -181,6 +181,37 @@
           <button class="add-task" type="button" data-add="shared">+ 添加共同待办</button>
         </article>
       </section>
+
+      <!-- 已完成事项 -->
+      <section class="completed-section">
+        <div class="section-title">
+          <h3>✅ 已完成事项</h3>
+          <button class="text-btn danger" type="button" id="btnClearCompleted" style="display:none">清空已完成</button>
+        </div>
+        <div class="completed-columns">
+          <article class="todo-board completed-board">
+            <div class="board-title">
+              <div class="avatar blush" style="width:28px;height:28px;font-size:12px">倩</div>
+              <h4 id="completedMyName">倩倩</h4>
+            </div>
+            <div id="myCompletedList"></div>
+          </article>
+          <article class="todo-board completed-board">
+            <div class="board-title">
+              <div class="avatar lilac" style="width:28px;height:28px;font-size:12px">胖</div>
+              <h4 id="completedPartnerName">胖胖磨叽</h4>
+            </div>
+            <div id="partnerCompletedList"></div>
+          </article>
+          <article class="todo-board completed-board wide">
+            <div class="board-title">
+              <div class="avatar mint" style="width:28px;height:28px;font-size:12px">共</div>
+              <h4>共同</h4>
+            </div>
+            <div id="sharedCompletedList"></div>
+          </article>
+        </div>
+      </section>
     </section>
 
     <!-- ===== 纪念日页 ===== -->

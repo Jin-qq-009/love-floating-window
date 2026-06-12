@@ -805,6 +805,100 @@ select {
   box-shadow: 0 4px 12px var(--brand-glow);
 }
 
+/* — Completed Section — */
+.completed-section {
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-5);
+  border-top: 2px dashed var(--line);
+}
+
+.completed-section .section-title h3 {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.completed-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.completed-board {
+  background: rgba(255,255,255,.5);
+  border-color: var(--line-soft);
+  box-shadow: none;
+}
+
+.completed-board .board-title h4 {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
+
+.completed-item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: var(--sp-2);
+  align-items: start;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  transition: all var(--t-fast);
+}
+
+.completed-item:hover {
+  border-color: var(--line);
+}
+
+.completed-item .completed-text {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--line);
+}
+
+.completed-item .completed-text .completed-note {
+  display: block;
+  color: var(--muted-soft);
+  font-size: var(--fs-xs);
+  text-decoration: none;
+  margin-top: 2px;
+}
+
+.completed-item .completed-time {
+  color: var(--muted-soft);
+  font-size: 10px;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.completed-item .undo-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 0; cursor: pointer;
+  background: transparent;
+  color: var(--muted-soft);
+  font-size: 11px;
+  display: grid; place-items: center;
+  transition: all var(--t-fast);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.completed-item .undo-btn:hover {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+}
+
+.completed-item input[type="checkbox"] {
+  accent-color: var(--success);
+}
+
 /* =========================================================
    Memories Page
    ========================================================= */
@@ -1385,8 +1479,8 @@ select {
   .meet-card h2 strong { font-size: var(--fs-2xl); }
   #meetupMap { height: 200px; }
   .map-route { min-height: 200px; }
-  .status-grid, .summary-grid, .todo-columns { grid-template-columns: 1fr; }
-  .todo-board.wide { grid-column: auto; }
+  .status-grid, .summary-grid, .todo-columns, .completed-columns { grid-template-columns: 1fr; }
+  .todo-board.wide, .completed-board.wide { grid-column: auto; }
   .memory-grid { grid-template-columns: 1fr 1fr; }
   .settings-list { grid-template-columns: 1fr; }
   .quick-note { padding: var(--sp-4); }

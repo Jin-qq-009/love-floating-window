@@ -186,20 +186,33 @@
       ...data.todos.partner.map(function (t) { return Object.assign({}, t, { owner: data.partner.name }); }),
       ...data.todos.shared.map(function (t) { return Object.assign({}, t, { owner: '共同' }); }),
     ];
-    if (allTodos.length === 0) {
+    var completedCount = (data.completed ? data.completed.me.length : 0)
+      + (data.completed ? data.completed.partner.length : 0)
+      + (data.completed ? data.completed.shared.length : 0);
+    if (allTodos.length === 0 && completedCount === 0) {
       previewEl.innerHTML = '<p class="empty-hint">暂无待办，去待办页添加吧</p>';
     } else {
-      allTodos.slice(0, 4).forEach(function (t) {
-        var label = document.createElement('label');
-        var cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = t.done;
-        cb.disabled = true;
-        cb.style.accentColor = 'var(--brand)';
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(' ' + t.owner + '：' + t.text));
-        previewEl.appendChild(label);
-      });
+      if (allTodos.length === 0) {
+        previewEl.innerHTML = '<p class="empty-hint">所有待办已完成 🎉</p>';
+      } else {
+        allTodos.slice(0, 4).forEach(function (t) {
+          var label = document.createElement('label');
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = false;
+          cb.disabled = true;
+          cb.style.accentColor = 'var(--brand)';
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(' ' + t.owner + '：' + t.text));
+          previewEl.appendChild(label);
+        });
+      }
+      if (completedCount > 0) {
+        var completedHint = document.createElement('p');
+        completedHint.style.cssText = 'margin-top:8px;font-size:12px;color:var(--muted-soft)';
+        completedHint.textContent = '已完成 ' + completedCount + ' 项';
+        previewEl.appendChild(completedHint);
+      }
     }
 
     // 纪念日提醒
@@ -523,6 +536,9 @@
   function renderTodos() {
     data = S.loadData();
 
+    // 确保数据结构完整
+    if (!data.completed) data.completed = { me: [], partner: [], shared: [] };
+
     document.getElementById('todoMyAvatar').textContent = data.me.avatar;
     document.getElementById('todoMyName').textContent = data.me.name + '的待办';
     document.getElementById('todoPartnerAvatar').textContent = data.partner.avatar;
@@ -531,6 +547,17 @@
     renderTodoList('myTodoList', data.todos.me, 'me');
     renderTodoList('partnerTodoList', data.todos.partner, 'partner');
     renderTodoList('sharedTodoList', data.todos.shared, 'shared');
+
+    // 已完成列表
+    document.getElementById('completedMyName').textContent = data.me.name;
+    document.getElementById('completedPartnerName').textContent = data.partner.name;
+    renderCompletedList('myCompletedList', data.completed.me, 'me');
+    renderCompletedList('partnerCompletedList', data.completed.partner, 'partner');
+    renderCompletedList('sharedCompletedList', data.completed.shared, 'shared');
+
+    // 清空按钮显示
+    var totalCompleted = data.completed.me.length + data.completed.partner.length + data.completed.shared.length;
+    document.getElementById('btnClearCompleted').style.display = totalCompleted > 0 ? 'inline-block' : 'none';
   }
 
   function renderTodoList(containerId, todos, category) {
@@ -542,19 +569,24 @@
       return;
     }
 
-    todos.forEach(function (todo) {
+    todos.forEach(function (todo, idx) {
       var label = document.createElement('label');
       label.className = 'task';
       var canEdit = category === 'me' || category === 'shared';
       var cb = document.createElement('input');
       cb.type = 'checkbox';
-      cb.checked = todo.done;
+      cb.checked = false; // 只显示未完成的
       if (!canEdit) cb.disabled = true;
       cb.addEventListener('change', function () {
-        todo.done = cb.checked;
+        // 勾选 → 移到已完成
+        var item = data.todos[category].splice(idx, 1)[0];
+        item.completedAt = S.getNowTimeStr();
+        if (!data.completed) data.completed = { me: [], partner: [], shared: [] };
+        data.completed[category].unshift(item);
         S.saveData(data);
         renderTodos();
         renderHome();
+        showToast('已完成：' + item.text);
       });
       label.appendChild(cb);
       label.appendChild(document.createTextNode(' ' + todo.text + ' '));
@@ -564,6 +596,54 @@
         label.appendChild(span);
       }
       container.appendChild(label);
+    });
+  }
+
+  function renderCompletedList(containerId, items, category) {
+    var container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+      container.innerHTML = '<p class="empty-hint" style="padding:12px 8px;font-size:12px">暂无已完成</p>';
+      return;
+    }
+
+    items.forEach(function (item, idx) {
+      var div = document.createElement('div');
+      div.className = 'completed-item';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+      cb.addEventListener('change', function () {
+        // 取消勾选 → 恢复到待办
+        var restored = data.completed[category].splice(idx, 1)[0];
+        delete restored.completedAt;
+        data.todos[category].unshift(restored);
+        S.saveData(data);
+        renderTodos();
+        renderHome();
+        showToast('已恢复：' + restored.text);
+      });
+
+      var textWrap = document.createElement('div');
+      textWrap.className = 'completed-text';
+      textWrap.textContent = item.text;
+      if (item.note) {
+        var noteEl = document.createElement('span');
+        noteEl.className = 'completed-note';
+        noteEl.textContent = item.note;
+        textWrap.appendChild(noteEl);
+      }
+
+      var timeEl = document.createElement('span');
+      timeEl.className = 'completed-time';
+      timeEl.textContent = item.completedAt || '';
+
+      div.appendChild(cb);
+      div.appendChild(textWrap);
+      div.appendChild(timeEl);
+      container.appendChild(div);
     });
   }
 
@@ -584,13 +664,28 @@
     var note = document.getElementById('todoNoteInput').value.trim();
     if (!text) return;
 
-    var newTodo = { id: S.genId(), text: text, note: note, done: false };
+    var newTodo = { id: S.genId(), text: text, note: note };
     data.todos[currentTodoTarget].push(newTodo);
     S.saveData(data);
     closeModal('modalTodo');
     renderTodos();
     renderHome();
     showToast('待办已添加');
+  });
+
+  // 清空已完成事项
+  document.getElementById('btnClearCompleted').addEventListener('click', function () {
+    showConfirm({
+      title: '清空已完成事项',
+      message: '确定要清空所有已完成的事项吗？此操作不可撤销。',
+      onConfirm: function () {
+        data.completed = { me: [], partner: [], shared: [] };
+        S.saveData(data);
+        renderTodos();
+        renderHome();
+        showToast('已完成事项已清空');
+      }
+    });
   });
 
   // ==================== Memories ====================

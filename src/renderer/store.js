@@ -50,13 +50,18 @@ window.AppStore = (function () {
           { id: 'm2', text: '给胖胖磨叽留一句晚安', note: '不需要很长', done: false },
         ],
         partner: [
-          { id: 'p1', text: '回家后报平安', note: '已完成归档', done: true },
+          { id: 'p1', text: '回家后报平安', note: '已完成归档', done: false },
           { id: 'p2', text: '早点休息', note: '今天别熬太晚', done: false },
         ],
         shared: [
           { id: 's1', text: '晚上视频 20 分钟', note: '聊一下周末安排', done: false },
           { id: 's2', text: '确认见面当天晚餐', note: '想吃热乎一点的', done: false },
         ],
+      },
+      completed: {
+        me: [],
+        partner: [],
+        shared: [],
       },
       memories: [
         {
@@ -137,6 +142,21 @@ window.AppStore = (function () {
         if (!data.partner.city) { data.partner.city = '北京'; data.partner.lat = 39.9042; data.partner.lng = 116.4074; }
         if (data.partner.name === '阿远') { data.partner.name = '胖胖磨叽'; }
         if (data.partner.avatar === '远') { data.partner.avatar = '胖'; }
+        // 迁移：补上 completed 字段
+        if (!data.completed) { data.completed = { me: [], partner: [], shared: [] }; }
+        // 迁移：把已勾选的待办移到 completed
+        ['me', 'partner', 'shared'].forEach(function (key) {
+          if (data.todos && data.todos[key]) {
+            var doneItems = data.todos[key].filter(function (t) { return t.done; });
+            var pendingItems = data.todos[key].filter(function (t) { return !t.done; });
+            data.todos[key] = pendingItems.map(function (t) { t.done = false; return t; });
+            if (doneItems.length > 0) {
+              data.completed[key] = data.completed[key].concat(
+                doneItems.map(function (t) { delete t.done; t.completedAt = t.completedAt || getNowTimeStr(); return t; })
+              );
+            }
+          }
+        });
         saveData(data);
         return data;
       }
