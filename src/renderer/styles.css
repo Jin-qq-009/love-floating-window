@@ -176,7 +176,7 @@ body {
 }
 
 .map-route {
-  min-height: 200px;
+  min-height: 320px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -189,7 +189,7 @@ body {
 
 #meetupMap {
   width: 100%;
-  height: 200px;
+  height: 320px;
   border-radius: 16px 16px 0 0;
   position: relative;
   background: #e8e0d8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'%3E%3Crect fill='%23e8e0d8' width='256' height='256'/%3E%3Ctext x='128' y='128' text-anchor='middle' dominant-baseline='middle' fill='%23b0a8a0' font-size='14' font-family='sans-serif'%3E地图加载中...%3C/text%3E%3C/svg%3E") center/48px repeat;
@@ -211,36 +211,78 @@ body {
 }
 
 /* 自定义标记图标 */
+.custom-marker-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
 .map-marker {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   color: #fff;
   font-weight: 800;
-  font-size: 14px;
-  box-shadow: 0 6px 16px rgba(0,0,0,.25);
-  border: 2.5px solid #fff;
+  font-size: 15px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+  border: 3px solid #fff;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  position: relative;
+  z-index: 2;
 }
-.map-marker.me { background: #e85d91; }
-.map-marker.partner { background: #a987df; }
+.map-marker.me { background: linear-gradient(135deg, #e85d91, #d9467e); }
+.map-marker.partner { background: linear-gradient(135deg, #a987df, #9066d0); }
 
 .map-marker::after {
   content: '';
   position: absolute;
-  bottom: -6px;
+  bottom: -7px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
 }
-.map-marker.me::after { border-top: 6px solid #e85d91; }
-.map-marker.partner::after { border-top: 6px solid #a987df; }
+.map-marker.me::after { border-top: 7px solid #d9467e; }
+.map-marker.partner::after { border-top: 7px solid #9066d0; }
+
+/* 标记下方的城市名标签 */
+.marker-label {
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  letter-spacing: 0.5px;
+}
+
+/* 地图上的距离标签 */
+.distance-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 12px rgba(232,93,145,.2);
+  font-size: 12px;
+  font-weight: 700;
+  color: #e85d91;
+  white-space: nowrap;
+  border: 1px solid rgba(232,93,145,.2);
+}
+.dist-icon {
+  font-size: 11px;
+}
 
 /* 路线动画 */
 .route-curve {

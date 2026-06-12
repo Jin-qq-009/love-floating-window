@@ -1,6 +1,6 @@
 /**
  * 我们的小窗 - 地图模块
- * 基于 Leaflet.js 的真实交互地图，高德瓦片 + OSM 备用
+ * 基于 Leaflet.js + 高德地图瓦片，中文城市标注
  */
 
 window.AppMap = (function () {
@@ -10,24 +10,39 @@ window.AppMap = (function () {
   var routeLine = null;
   var currentTileLayer = null;
 
-  function createMarkerIcon(type, avatar) {
+  /**
+   * 创建带城市名标签的标记图标
+   */
+  function createMarkerIcon(type, avatar, cityName) {
+    var color = type === 'me' ? '#e85d91' : '#a987df';
+    var bgColor = type === 'me' ? '#ffe3ee' : '#f0e6ff';
+
     return L.divIcon({
       className: '',
-      html: '<div class="map-marker ' + type + '">' + avatar + '</div>',
-      iconSize: [32, 38],
-      iconAnchor: [16, 38],
-      popupAnchor: [0, -40],
+      html:
+        '<div class="custom-marker-wrap">' +
+          '<div class="map-marker ' + type + '">' + avatar + '</div>' +
+          '<div class="marker-label" style="background:' + bgColor + ';color:' + color + ';border-color:' + color + '">' +
+            cityName +
+          '</div>' +
+        '</div>',
+      iconSize: [32, 50],
+      iconAnchor: [16, 50],
+      popupAnchor: [0, -52],
     });
   }
 
+  /**
+   * 加载高德地图瓦片（纯中文标注）
+   */
   function addTileLayer() {
     if (currentTileLayer && map) {
       map.removeLayer(currentTileLayer);
     }
 
-    // 高德地图瓦片（国内最稳定，中文地名）
-    currentTileLayer = L.tileLayer(
-      'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_en&size=1&style=7&x={x}&y={y}&z={z}',
+    // 高德地图 - 纯中文标注标准地图
+    var gaodeStandard = L.tileLayer(
+      'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}',
       {
         maxZoom: 18,
         subdomains: '1234',
@@ -35,8 +50,32 @@ window.AppMap = (function () {
       }
     );
 
+    // 高德卫星图层（备用）
+    var gaodeSatellite = L.tileLayer(
+      'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+      {
+        maxZoom: 18,
+        subdomains: '1234',
+        attribution: '',
+      }
+    );
+
+    // 高德路网标注层（覆盖在卫星图上）
+    var gaodeRoadLabel = L.tileLayer(
+      'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+      {
+        maxZoom: 18,
+        subdomains: '1234',
+        attribution: '',
+      }
+    );
+
+    // 默认使用标准地图
+    currentTileLayer = gaodeStandard;
+    currentTileLayer.addTo(map);
+
+    // 超时后切换 OSM 备用
     var loadTimeout = setTimeout(function () {
-      // 高德加载超时，切换到 OSM
       console.log('[Map] Gaode tiles timeout, trying OSM...');
       if (currentTileLayer && map) {
         map.removeLayer(currentTileLayer);
@@ -50,10 +89,8 @@ window.AppMap = (function () {
 
     currentTileLayer.once('load', function () {
       clearTimeout(loadTimeout);
-      console.log('[Map] Tiles loaded successfully');
+      console.log('[Map] Gaode tiles loaded successfully');
     });
-
-    currentTileLayer.addTo(map);
   }
 
   function init() {
@@ -75,7 +112,6 @@ window.AppMap = (function () {
     var centerLat = (meLat + pLat) / 2;
     var centerLng = (meLng + pLng) / 2;
 
-    // 创建地图实例
     try {
       map = L.map('meetupMap', {
         center: [centerLat, centerLng],
@@ -83,7 +119,7 @@ window.AppMap = (function () {
         zoomControl: false,
         attributionControl: false,
         dragging: true,
-        scrollWheelZoom: false,
+        scrollWheelZoom: true,
         doubleClickZoom: false,
         touchZoom: true,
       });
@@ -92,7 +128,7 @@ window.AppMap = (function () {
       return;
     }
 
-    // 加载瓦片
+    // 加载高德瓦片
     addTileLayer();
 
     // 缩放控件
@@ -123,27 +159,34 @@ window.AppMap = (function () {
     var pLat = data.partner.lat || 39.9042;
     var pLng = data.partner.lng || 116.4074;
 
+    var meCity = data.me.city || '我';
+    var pCity = data.partner.city || 'TA';
+
     // 清除旧标记
     if (meMarker) { map.removeLayer(meMarker); meMarker = null; }
     if (partnerMarker) { map.removeLayer(partnerMarker); partnerMarker = null; }
     if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
 
-    // 我的位置
+    // 我的位置 - 带城市名标签
     meMarker = L.marker([meLat, meLng], {
-      icon: createMarkerIcon('me', data.me.avatar),
+      icon: createMarkerIcon('me', data.me.avatar, meCity),
     }).addTo(map);
     meMarker.bindPopup(
-      '<strong style="color:#e85d91">' + data.me.name + '</strong><br>' +
-      '<span style="color:#81717e">' + (data.me.city || '我的城市') + '</span>'
+      '<div style="text-align:center">' +
+        '<strong style="color:#e85d91;font-size:15px">' + data.me.name + '</strong><br>' +
+        '<span style="color:#81717e;font-size:12px">📍 ' + meCity + '</span>' +
+      '</div>'
     );
 
-    // TA 的位置
+    // TA 的位置 - 带城市名标签
     partnerMarker = L.marker([pLat, pLng], {
-      icon: createMarkerIcon('partner', data.partner.avatar),
+      icon: createMarkerIcon('partner', data.partner.avatar, pCity),
     }).addTo(map);
     partnerMarker.bindPopup(
-      '<strong style="color:#a987df">' + data.partner.name + '</strong><br>' +
-      '<span style="color:#81717e">' + (data.partner.city || 'TA的城市') + '</span>'
+      '<div style="text-align:center">' +
+        '<strong style="color:#a987df;font-size:15px">' + data.partner.name + '</strong><br>' +
+        '<span style="color:#81717e;font-size:12px">📍 ' + pCity + '</span>' +
+      '</div>'
     );
 
     // 贝塞尔弧线连接两人
@@ -164,6 +207,22 @@ window.AppMap = (function () {
       dashArray: '8 8',
       className: 'route-curve',
     }).addTo(map);
+
+    // 在路线中间添加距离标签
+    var midIdx = Math.floor(steps / 2);
+    var midPoint = curvePoints[midIdx];
+    var S = window.AppStore;
+    var distance = S.calcDistance(meLat, meLng, pLat, pLng);
+    var distLabel = L.divIcon({
+      className: '',
+      html: '<div class="distance-badge">' +
+        '<span class="dist-icon">❤️</span>' +
+        '<span>直线 ' + distance.toLocaleString() + ' km</span>' +
+      '</div>',
+      iconSize: [120, 28],
+      iconAnchor: [60, 14],
+    });
+    L.marker(midPoint, { icon: distLabel, interactive: false }).addTo(map);
   }
 
   function fitBounds(lat1, lng1, lat2, lng2) {
@@ -172,7 +231,7 @@ window.AppMap = (function () {
       [Math.min(lat1, lat2) - 1, Math.min(lng1, lng2) - 1],
       [Math.max(lat1, lat2) + 1, Math.max(lng1, lng2) + 1]
     );
-    map.fitBounds(bounds, { padding: [20, 20], maxZoom: 8 });
+    map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 });
   }
 
   function updateDistanceInfo(data) {
