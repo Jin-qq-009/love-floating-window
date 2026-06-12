@@ -187,9 +187,9 @@ window.AppStore = (function () {
   const QUICK_STATUSES = ['工作中', '休息中', '通勤中', '忙碌中', '可聊天', '勿扰', '睡觉中', '路上', '吃饭中'];
 
   const MOOD_COLORS = {
-    '开心': 'pink', '平静': 'blue', '想念': 'peach', '疲惫': 'lilac',
-    '低落': 'lilac', '生气': 'pink', '忙碌': 'peach', '期待': 'pink',
-    '委屈': 'lilac', '松弛': 'mint', '想抱抱': 'pink', 'emo': 'lilac', '有点烦': 'peach',
+    '开心': 'mood-happy', '平静': 'mood-calm', '想念': 'mood-miss', '疲惫': 'mood-tired',
+    '低落': 'mood-sad', '生气': 'mood-angry', '忙碌': 'mood-busy', '期待': 'mood-excited',
+    '委屈': 'mood-wronged', '松弛': 'mood-relaxed', '想抱抱': 'mood-hug', 'emo': 'mood-emo', '有点烦': 'mood-annoyed',
   };
 
   // 常用城市坐标库

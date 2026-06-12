@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <a href="#mainContent" class="skip-nav">跳到主要内容</a>
+
   <section class="app-window">
     <header class="titlebar">
       <div class="titlebar-drag">
@@ -22,20 +24,21 @@
         </div>
       </div>
       <div class="window-actions">
-        <button class="win-btn minimize" id="btnMinimize" title="最小化"></button>
-        <button class="win-btn close" id="btnClose" title="关闭到悬浮窗"></button>
+        <button class="win-btn minimize" id="btnMinimize" title="最小化" aria-label="最小化窗口"></button>
+        <button class="win-btn close" id="btnClose" title="关闭到悬浮窗" aria-label="关闭到悬浮窗"></button>
       </div>
     </header>
 
-    <nav class="tabs" aria-label="主导航">
-      <button class="tab active" type="button" data-view="home">首页</button>
-      <button class="tab" type="button" data-view="todos">待办</button>
-      <button class="tab" type="button" data-view="memories">纪念日</button>
-      <button class="tab ghost" type="button" data-view="settings">设置</button>
+    <nav class="tabs" role="tablist" aria-label="主导航">
+      <button class="tab active" type="button" role="tab" data-view="home" aria-controls="homeView" aria-selected="true">首页</button>
+      <button class="tab" type="button" role="tab" data-view="todos" aria-controls="todosView" aria-selected="false">待办</button>
+      <button class="tab" type="button" role="tab" data-view="memories" aria-controls="memoriesView" aria-selected="false">纪念日</button>
+      <button class="tab ghost" type="button" role="tab" data-view="settings" aria-controls="settingsView" aria-selected="false">设置</button>
     </nav>
 
     <!-- ===== 首页 ===== -->
-    <section class="view active" id="homeView">
+    <section class="view active" id="homeView" role="tabpanel" aria-labelledby="tab-home">
+      <div id="mainContent">
       <!-- 上方：倒计时 + 地图 并排 -->
       <div class="hero-grid">
         <article class="meet-card">
@@ -76,7 +79,7 @@
               <p id="myStatusText">--</p>
             </div>
           </div>
-          <div class="mood-pill pink" id="myMoodPill">--</div>
+          <div class="mood-pill mood-none" id="myMoodPill">--</div>
           <p class="status-line" id="myFreeText">--</p>
           <button class="text-btn edit-status" type="button" data-target="me">更新状态</button>
         </article>
@@ -89,7 +92,7 @@
               <p id="partnerStatusText">--</p>
             </div>
           </div>
-          <div class="mood-pill peach" id="partnerMoodPill">--</div>
+          <div class="mood-pill mood-none" id="partnerMoodPill">--</div>
           <p class="status-line" id="partnerFreeText">--</p>
         </article>
       </section>
@@ -115,16 +118,25 @@
       <section class="panel-card timeline-card">
         <div class="section-title">
           <h3>时间线</h3>
-          <select id="timelineMonth" aria-label="月份归档">
-            <option value="all">全部</option>
-          </select>
+          <div style="display:flex;align-items:center;gap:12px">
+            <select id="timelineMonth" aria-label="月份归档">
+              <option value="all">全部</option>
+            </select>
+            <button class="timeline-toggle" type="button" id="btnToggleTimeline" aria-label="折叠时间线" aria-expanded="true">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              收起
+            </button>
+          </div>
         </div>
-        <div class="timeline" id="timelineList"></div>
+        <div class="timeline-content" id="timelineContent">
+          <div class="timeline" id="timelineList"></div>
+        </div>
       </section>
+      </div>
     </section>
 
     <!-- ===== 待办页 ===== -->
-    <section class="view" id="todosView">
+    <section class="view" id="todosView" role="tabpanel" aria-labelledby="tab-todos">
       <div class="page-heading">
         <div>
           <p class="eyebrow">今天</p>
@@ -172,7 +184,7 @@
     </section>
 
     <!-- ===== 纪念日页 ===== -->
-    <section class="view" id="memoriesView">
+    <section class="view" id="memoriesView" role="tabpanel" aria-labelledby="tab-memories">
       <div class="page-heading">
         <div>
           <p class="eyebrow">纪念日 / 小惊喜</p>
@@ -185,7 +197,7 @@
     </section>
 
     <!-- ===== 设置页 ===== -->
-    <section class="view" id="settingsView">
+    <section class="view" id="settingsView" role="tabpanel" aria-labelledby="tab-settings">
       <div class="page-heading">
         <div>
           <p class="eyebrow">设置</p>
@@ -201,32 +213,32 @@
         <div class="settings-item city-picker-wrap">
           <label>我的城市</label>
           <div class="city-picker" id="myCityPicker">
-            <div class="city-picker-display" data-placeholder="选择城市">
+            <div class="city-picker-display" data-placeholder="选择城市" role="combobox" aria-expanded="false" aria-haspopup="listbox">
               <span class="city-picker-value" id="myCityDisplay">诸暨</span>
-              <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <input type="hidden" id="settingMyCity" value="诸暨">
             <input type="hidden" id="settingMyLat" value="29.7069">
             <input type="hidden" id="settingMyLng" value="120.2362">
-            <div class="city-picker-dropdown">
+            <div class="city-picker-dropdown" role="listbox" aria-label="城市列表">
               <div class="city-picker-search-wrap">
-                <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）...">
+                <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）..." aria-label="搜索城市">
               </div>
-              <div class="city-picker-tabs">
-                <button class="city-tab active" data-region="hot">热门</button>
-                <button class="city-tab" data-region="cn">中国</button>
-                <button class="city-tab" data-region="as">亚洲</button>
-                <button class="city-tab" data-region="eu">欧洲</button>
-                <button class="city-tab" data-region="na">北美</button>
-                <button class="city-tab" data-region="sa">南美</button>
-                <button class="city-tab" data-region="af">非洲</button>
-                <button class="city-tab" data-region="oc">大洋洲</button>
+              <div class="city-picker-tabs" role="tablist" aria-label="地区分类">
+                <button class="city-tab active" data-region="hot" role="tab" aria-selected="true">热门</button>
+                <button class="city-tab" data-region="cn" role="tab" aria-selected="false">中国</button>
+                <button class="city-tab" data-region="as" role="tab" aria-selected="false">亚洲</button>
+                <button class="city-tab" data-region="eu" role="tab" aria-selected="false">欧洲</button>
+                <button class="city-tab" data-region="na" role="tab" aria-selected="false">北美</button>
+                <button class="city-tab" data-region="sa" role="tab" aria-selected="false">南美</button>
+                <button class="city-tab" data-region="af" role="tab" aria-selected="false">非洲</button>
+                <button class="city-tab" data-region="oc" role="tab" aria-selected="false">大洋洲</button>
               </div>
-              <div class="city-picker-list"></div>
+              <div class="city-picker-list" role="listbox"></div>
               <div class="city-picker-online" style="display:none">
                 <div class="city-picker-online-hint">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
                   在线搜索更多城市...
                 </div>
               </div>
@@ -240,38 +252,40 @@
         <div class="settings-item city-picker-wrap">
           <label>TA 的城市</label>
           <div class="city-picker" id="partnerCityPicker">
-            <div class="city-picker-display" data-placeholder="选择城市">
+            <div class="city-picker-display" data-placeholder="选择城市" role="combobox" aria-expanded="false" aria-haspopup="listbox">
               <span class="city-picker-value" id="partnerCityDisplay">北京</span>
-              <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <input type="hidden" id="settingPartnerCity" value="北京">
             <input type="hidden" id="settingPartnerLat" value="39.9042">
             <input type="hidden" id="settingPartnerLng" value="116.4074">
-            <div class="city-picker-dropdown">
+            <div class="city-picker-dropdown" role="listbox" aria-label="城市列表">
               <div class="city-picker-search-wrap">
-                <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）...">
+                <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）..." aria-label="搜索城市">
               </div>
-              <div class="city-picker-tabs">
-                <button class="city-tab active" data-region="hot">热门</button>
-                <button class="city-tab" data-region="cn">中国</button>
-                <button class="city-tab" data-region="as">亚洲</button>
-                <button class="city-tab" data-region="eu">欧洲</button>
-                <button class="city-tab" data-region="na">北美</button>
-                <button class="city-tab" data-region="sa">南美</button>
-                <button class="city-tab" data-region="af">非洲</button>
-                <button class="city-tab" data-region="oc">大洋洲</button>
+              <div class="city-picker-tabs" role="tablist" aria-label="地区分类">
+                <button class="city-tab active" data-region="hot" role="tab" aria-selected="true">热门</button>
+                <button class="city-tab" data-region="cn" role="tab" aria-selected="false">中国</button>
+                <button class="city-tab" data-region="as" role="tab" aria-selected="false">亚洲</button>
+                <button class="city-tab" data-region="eu" role="tab" aria-selected="false">欧洲</button>
+                <button class="city-tab" data-region="na" role="tab" aria-selected="false">北美</button>
+                <button class="city-tab" data-region="sa" role="tab" aria-selected="false">南美</button>
+                <button class="city-tab" data-region="af" role="tab" aria-selected="false">非洲</button>
+                <button class="city-tab" data-region="oc" role="tab" aria-selected="false">大洋洲</button>
               </div>
-              <div class="city-picker-list"></div>
+              <div class="city-picker-list" role="listbox"></div>
               <div class="city-picker-online" style="display:none">
                 <div class="city-picker-online-hint">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
                   在线搜索更多城市...
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- 见面计划分组 -->
         <div class="settings-item">
           <label>见面日期</label>
           <input type="date" id="settingMeetupDate">
@@ -286,57 +300,59 @@
         </div>
         <div class="settings-actions">
           <button class="primary-btn" type="button" id="btnSaveSettings">保存设置</button>
-          <button class="text-btn danger" type="button" id="btnResetData">重置所有数据</button>
+          <button class="danger-btn" type="button" id="btnResetData">重置所有数据</button>
         </div>
       </div>
     </section>
   </section>
 
-  <!-- ===== 弹窗区域（放在 body 直接子级，避免被 app-window 层叠上下文限制） ===== -->
-  <div class="modal-overlay" id="modalStatus">
+  <!-- ===== 弹窗区域（放在 body 直接子级） ===== -->
+
+  <!-- 弹窗：更新状态 -->
+  <div class="modal-overlay" id="modalStatus" role="dialog" aria-modal="true" aria-labelledby="modalStatusTitle">
     <div class="modal">
       <div class="modal-header">
-        <h3>更新我的状态</h3>
-        <button class="modal-close" type="button">&times;</button>
+        <h3 id="modalStatusTitle">更新我的状态</h3>
+        <button class="modal-close" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
         <label>心情</label>
-        <div class="pill-group" id="moodPicker"></div>
+        <div class="pill-group" id="moodPicker" role="radiogroup" aria-label="选择心情"></div>
         <label>快捷状态</label>
-        <div class="pill-group" id="statusPicker"></div>
+        <div class="pill-group" id="statusPicker" role="radiogroup" aria-label="选择快捷状态"></div>
         <label>补充一句话</label>
         <textarea id="freeTextInput" placeholder="说点什么..." rows="2"></textarea>
       </div>
       <div class="modal-footer">
-        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="secondary-btn" type="button" data-close-modal>取消</button>
         <button class="primary-btn" type="button" id="btnSaveStatus">保存</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== 弹窗：留言 ===== -->
-  <div class="modal-overlay" id="modalMessage">
+  <!-- 弹窗：留言 -->
+  <div class="modal-overlay" id="modalMessage" role="dialog" aria-modal="true" aria-labelledby="modalMessageTitle">
     <div class="modal">
       <div class="modal-header">
-        <h3>留言</h3>
-        <button class="modal-close" type="button">&times;</button>
+        <h3 id="modalMessageTitle">留言</h3>
+        <button class="modal-close" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
         <textarea id="messageInput" placeholder="写点什么给 TA..." rows="3"></textarea>
       </div>
       <div class="modal-footer">
-        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="secondary-btn" type="button" data-close-modal>取消</button>
         <button class="primary-btn" type="button" id="btnSendMessage">发送</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== 弹窗：编辑见面计划 ===== -->
-  <div class="modal-overlay" id="modalMeetup">
+  <!-- 弹窗：编辑见面计划 -->
+  <div class="modal-overlay" id="modalMeetup" role="dialog" aria-modal="true" aria-labelledby="modalMeetupTitle">
     <div class="modal">
       <div class="modal-header">
-        <h3>编辑见面计划</h3>
-        <button class="modal-close" type="button">&times;</button>
+        <h3 id="modalMeetupTitle">编辑见面计划</h3>
+        <button class="modal-close" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
         <label>见面日期</label>
@@ -347,18 +363,18 @@
         <input type="text" id="meetupNoteInput" placeholder="输入备注">
       </div>
       <div class="modal-footer">
-        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="secondary-btn" type="button" data-close-modal>取消</button>
         <button class="primary-btn" type="button" id="btnSaveMeetup">保存</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== 弹窗：新增待办 ===== -->
-  <div class="modal-overlay" id="modalTodo">
+  <!-- 弹窗：新增待办 -->
+  <div class="modal-overlay" id="modalTodo" role="dialog" aria-modal="true" aria-labelledby="todoModalTitle">
     <div class="modal">
       <div class="modal-header">
         <h3 id="todoModalTitle">新增待办</h3>
-        <button class="modal-close" type="button">&times;</button>
+        <button class="modal-close" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
         <label>待办内容</label>
@@ -367,18 +383,18 @@
         <input type="text" id="todoNoteInput" placeholder="附加一句标注">
       </div>
       <div class="modal-footer">
-        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="secondary-btn" type="button" data-close-modal>取消</button>
         <button class="primary-btn" type="button" id="btnSaveTodo">添加</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== 弹窗：新增纪念日 ===== -->
-  <div class="modal-overlay" id="modalMemory">
+  <!-- 弹窗：新增纪念日 -->
+  <div class="modal-overlay" id="modalMemory" role="dialog" aria-modal="true" aria-labelledby="modalMemoryTitle">
     <div class="modal">
       <div class="modal-header">
-        <h3>新增纪念日</h3>
-        <button class="modal-close" type="button">&times;</button>
+        <h3 id="modalMemoryTitle">新增纪念日</h3>
+        <button class="modal-close" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
         <label>标题</label>
@@ -393,8 +409,21 @@
         </label>
       </div>
       <div class="modal-footer">
-        <button class="text-btn" type="button" data-close-modal>取消</button>
+        <button class="secondary-btn" type="button" data-close-modal>取消</button>
         <button class="primary-btn" type="button" id="btnSaveMemory">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 自定义确认弹窗 -->
+  <div class="confirm-overlay" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirm-dialog">
+      <h3 class="confirm-title" id="confirmTitle">确认操作</h3>
+      <p class="confirm-message" id="confirmMessage">确定要执行此操作吗？</p>
+      <input type="text" class="confirm-input" id="confirmInput" style="display:none" placeholder='输入"确认"以继续'>
+      <div class="confirm-actions">
+        <button class="secondary-btn" type="button" id="confirmCancel">取消</button>
+        <button class="danger-btn" type="button" id="confirmOk">确认</button>
       </div>
     </div>
   </div>

@@ -1,5 +1,6 @@
 /**
- * 我们的小窗 - 主窗口交互逻辑
+ * 我们的小窗 - 主窗口交互逻辑 v2
+ * — 自定义确认弹窗、ESC关闭、时间线折叠、情绪语义色
  */
 
 (function () {
@@ -16,6 +17,8 @@
     var toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
     document.body.appendChild(toast);
 
     requestAnimationFrame(function () {
@@ -36,6 +39,56 @@
     return div.innerHTML;
   }
 
+  // ==================== Custom Confirm Dialog ====================
+  // 替代 confirm()，支持危险操作输入确认码
+
+  function showConfirm(options) {
+    // options: { title, message, requireInput, onConfirm }
+    var overlay = document.getElementById('confirmOverlay');
+    var titleEl = document.getElementById('confirmTitle');
+    var msgEl = document.getElementById('confirmMessage');
+    var inputEl = document.getElementById('confirmInput');
+    var okBtn = document.getElementById('confirmOk');
+    var cancelBtn = document.getElementById('confirmCancel');
+
+    titleEl.textContent = options.title || '确认操作';
+    msgEl.textContent = options.message || '确定要执行此操作吗？';
+
+    if (options.requireInput) {
+      inputEl.style.display = 'block';
+      inputEl.value = '';
+      inputEl.placeholder = '输入"确认"以继续';
+    } else {
+      inputEl.style.display = 'none';
+    }
+
+    overlay.classList.add('show');
+
+    // 清理旧监听
+    var newOk = okBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOk, okBtn);
+    var newCancel = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    newCancel.addEventListener('click', function () {
+      overlay.classList.remove('show');
+    });
+
+    newOk.addEventListener('click', function () {
+      if (options.requireInput && inputEl.value.trim() !== '确认') {
+        inputEl.style.borderColor = '#e85454';
+        inputEl.focus();
+        return;
+      }
+      overlay.classList.remove('show');
+      if (options.onConfirm) options.onConfirm();
+    });
+
+    if (options.requireInput) {
+      setTimeout(function () { inputEl.focus(); }, 100);
+    }
+  }
+
   // ==================== Tab Navigation ====================
 
   var tabs = document.querySelectorAll('.tabs .tab');
@@ -47,8 +100,14 @@
   };
 
   function setView(name) {
-    tabs.forEach(function (tab) { tab.classList.toggle('active', tab.dataset.view === name); });
-    Object.entries(views).forEach(function (entry) { entry[1].classList.toggle('active', entry[0] === name); });
+    tabs.forEach(function (tab) {
+      var isActive = tab.dataset.view === name;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    Object.entries(views).forEach(function (entry) {
+      entry[1].classList.toggle('active', entry[0] === name);
+    });
     if (name === 'todos') renderTodos();
     if (name === 'memories') renderMemories();
     if (name === 'settings') fillSettings();
@@ -106,7 +165,7 @@
     document.getElementById('myStatusText').textContent = myS.quickStatus + ' · ' + myS.freeText.substring(0, 6);
     var myMoodPill = document.getElementById('myMoodPill');
     myMoodPill.textContent = myS.mood;
-    myMoodPill.className = 'mood-pill ' + (S.MOOD_COLORS[myS.mood] || 'pink');
+    myMoodPill.className = 'mood-pill ' + (S.MOOD_COLORS[myS.mood] || 'mood-none');
     document.getElementById('myFreeText').textContent = myS.freeText;
 
     // 对方状态
@@ -116,7 +175,7 @@
     document.getElementById('partnerStatusText').textContent = pS.quickStatus + ' · ' + pS.freeText.substring(0, 6);
     var pMoodPill = document.getElementById('partnerMoodPill');
     pMoodPill.textContent = pS.mood;
-    pMoodPill.className = 'mood-pill ' + (S.MOOD_COLORS[pS.mood] || 'peach');
+    pMoodPill.className = 'mood-pill ' + (S.MOOD_COLORS[pS.mood] || 'mood-none');
     document.getElementById('partnerFreeText').textContent = pS.freeText;
 
     // 待办摘要
@@ -136,7 +195,7 @@
         cb.type = 'checkbox';
         cb.checked = t.done;
         cb.disabled = true;
-        cb.style.accentColor = 'var(--pink)';
+        cb.style.accentColor = 'var(--brand)';
         label.appendChild(cb);
         label.appendChild(document.createTextNode(' ' + t.owner + '：' + t.text));
         previewEl.appendChild(label);
@@ -211,50 +270,126 @@
 
   document.getElementById('timelineMonth').addEventListener('change', renderTimeline);
 
+  // ==================== Timeline Toggle ====================
+
+  var timelineCollapsed = false;
+  var btnToggleTimeline = document.getElementById('btnToggleTimeline');
+  var timelineContent = document.getElementById('timelineContent');
+
+  btnToggleTimeline.addEventListener('click', function () {
+    timelineCollapsed = !timelineCollapsed;
+    btnToggleTimeline.classList.toggle('collapsed', timelineCollapsed);
+    btnToggleTimeline.setAttribute('aria-expanded', timelineCollapsed ? 'false' : 'true');
+
+    if (timelineCollapsed) {
+      timelineContent.style.maxHeight = '0';
+      timelineContent.style.overflow = 'hidden';
+      btnToggleTimeline.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 展开';
+    } else {
+      timelineContent.style.maxHeight = 'none';
+      timelineContent.style.overflow = 'visible';
+      btnToggleTimeline.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 收起';
+    }
+  });
+
   // ==================== Modal Helpers ====================
 
+  var currentModalId = null;
+
   function openModal(id) {
+    currentModalId = id;
     document.getElementById(id).classList.add('show');
+    // Focus trap: focus first focusable element
+    var modal = document.getElementById(id).querySelector('.modal');
+    if (modal) {
+      var focusable = modal.querySelector('input, textarea, button:not(.modal-close)');
+      if (focusable) setTimeout(function () { focusable.focus(); }, 50);
+    }
   }
 
   function closeModal(id) {
     document.getElementById(id).classList.remove('show');
+    currentModalId = null;
   }
+
+  // ESC 关闭 Modal
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && currentModalId) {
+      closeModal(currentModalId);
+    }
+  });
 
   document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       btn.closest('.modal-overlay').classList.remove('show');
+      currentModalId = null;
     });
   });
 
   document.querySelectorAll('.modal-close').forEach(function (btn) {
     btn.addEventListener('click', function () {
       btn.closest('.modal-overlay').classList.remove('show');
+      currentModalId = null;
     });
   });
 
   document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
     overlay.addEventListener('click', function (e) {
-      if (e.target === overlay) overlay.classList.remove('show');
+      if (e.target === overlay) {
+        overlay.classList.remove('show');
+        currentModalId = null;
+      }
     });
   });
 
   // ==================== Status Update ====================
 
+  // 心情颜色映射（CSS变量值，用于pill圆点）
+  var MOOD_CSS_COLORS = {
+    '开心': 'var(--mood-happy)', '平静': 'var(--mood-calm)', '想念': 'var(--mood-miss)', '疲惫': 'var(--mood-tired)',
+    '低落': 'var(--mood-sad)', '生气': 'var(--mood-angry)', '忙碌': 'var(--mood-busy)', '期待': 'var(--mood-excited)',
+    '委屈': 'var(--mood-wronged)', '松弛': 'var(--mood-relaxed)', '想抱抱': 'var(--mood-hug)', 'emo': 'var(--mood-emo)', '有点烦': 'var(--mood-annoyed)',
+  };
+
   document.querySelector('[data-target="me"]').addEventListener('click', function () {
     data = S.loadData();
-    // 填充心情选择
+    // 填充心情选择（带颜色圆点）
     var moodPicker = document.getElementById('moodPicker');
     moodPicker.innerHTML = '';
-    var allMoods = [...S.MOODS, ...S.CUSTOM_MOODS];
+    var allMoods = [...S.MOODS, ...S.CUSTOM_MOODS, '未设置'];
     allMoods.forEach(function (mood) {
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'pill' + (data.status.me.mood === mood ? ' selected' : '');
+      btn.className = 'pill mood-pill-option' + (data.status.me.mood === mood ? ' selected' : '');
       btn.textContent = mood;
+      btn.setAttribute('role', 'radio');
+      btn.setAttribute('aria-checked', data.status.me.mood === mood ? 'true' : 'false');
+      // 设置圆点颜色
+      if (mood !== '未设置' && MOOD_CSS_COLORS[mood]) {
+        btn.style.setProperty('--pill-dot', MOOD_CSS_COLORS[mood]);
+        btn.querySelector(':scope') || true; // force style calc
+        // Use inline style for the ::before dot
+        var styleTag = document.createElement('style');
+        var uid = 'pill-' + mood.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '');
+        btn.classList.add(uid);
+        styleTag.textContent = '.' + uid + '::before { background: ' + MOOD_CSS_COLORS[mood] + '; }';
+        if (!document.getElementById('mood-dot-styles')) {
+          var container = document.createElement('style');
+          container.id = 'mood-dot-styles';
+          document.head.appendChild(container);
+        }
+        var moodStyles = document.getElementById('mood-dot-styles');
+        if (!moodStyles.textContent.includes(uid)) {
+          moodStyles.textContent += '\n.' + uid + '::before { background: ' + MOOD_CSS_COLORS[mood] + '; }';
+        }
+      }
       btn.addEventListener('click', function () {
-        moodPicker.querySelectorAll('.pill').forEach(function (p) { p.classList.remove('selected'); });
+        moodPicker.querySelectorAll('.pill').forEach(function (p) {
+          p.classList.remove('selected');
+          p.setAttribute('aria-checked', 'false');
+        });
         btn.classList.add('selected');
+        btn.setAttribute('aria-checked', 'true');
       });
       moodPicker.appendChild(btn);
     });
@@ -267,9 +402,15 @@
       btn.type = 'button';
       btn.className = 'pill' + (data.status.me.quickStatus === status ? ' selected' : '');
       btn.textContent = status;
+      btn.setAttribute('role', 'radio');
+      btn.setAttribute('aria-checked', data.status.me.quickStatus === status ? 'true' : 'false');
       btn.addEventListener('click', function () {
-        statusPicker.querySelectorAll('.pill').forEach(function (p) { p.classList.remove('selected'); });
+        statusPicker.querySelectorAll('.pill').forEach(function (p) {
+          p.classList.remove('selected');
+          p.setAttribute('aria-checked', 'false');
+        });
         btn.classList.add('selected');
+        btn.setAttribute('aria-checked', 'true');
       });
       statusPicker.appendChild(btn);
     });
@@ -283,16 +424,24 @@
     var selectedStatus = document.querySelector('#statusPicker .pill.selected');
     var freeText = document.getElementById('freeTextInput').value.trim();
 
-    if (selectedMood) data.status.me.mood = selectedMood.textContent;
+    if (selectedMood) {
+      var mood = selectedMood.textContent;
+      if (mood === '未设置') {
+        data.status.me.mood = '';
+      } else {
+        data.status.me.mood = mood;
+      }
+    }
     if (selectedStatus) data.status.me.quickStatus = selectedStatus.textContent;
-    if (freeText) data.status.me.freeText = freeText;
+    data.status.me.freeText = freeText;
     data.status.me.updatedAt = S.getNowTimeStr();
 
     // 添加时间线
+    var moodText = data.status.me.mood || '无';
     data.timeline.unshift({
       id: S.genId(),
       type: '状态更新',
-      content: data.me.name + '更新心情为"' + data.status.me.mood + '"，状态为"' + data.status.me.quickStatus + '"。',
+      content: data.me.name + '更新心情为"' + moodText + '"，状态为"' + data.status.me.quickStatus + '"。',
       time: S.getNowTimeStr(),
       date: S.getNowDateStr(),
     });
@@ -485,14 +634,19 @@
         delBtn.className = 'del-btn';
         delBtn.dataset.delMemory = mem.id;
         delBtn.textContent = '×';
+        delBtn.setAttribute('aria-label', '删除' + mem.title);
         delBtn.addEventListener('click', function () {
-          if (confirm('确定删除"' + mem.title + '"吗？')) {
-            data.memories = data.memories.filter(function (m) { return m.id !== mem.id; });
-            S.saveData(data);
-            renderMemories();
-            renderHome();
-            showToast('纪念日已删除');
-          }
+          showConfirm({
+            title: '删除纪念日',
+            message: '确定要删除"' + mem.title + '"吗？此操作不可撤销。',
+            onConfirm: function () {
+              data.memories = data.memories.filter(function (m) { return m.id !== mem.id; });
+              S.saveData(data);
+              renderMemories();
+              renderHome();
+              showToast('纪念日已删除');
+            }
+          });
         });
         card.appendChild(delBtn);
       } else {
@@ -517,14 +671,19 @@
         delBtnB.className = 'del-btn';
         delBtnB.dataset.delMemory = mem.id;
         delBtnB.textContent = '×';
+        delBtnB.setAttribute('aria-label', '删除' + mem.title);
         delBtnB.addEventListener('click', function () {
-          if (confirm('确定删除"' + mem.title + '"吗？')) {
-            data.memories = data.memories.filter(function (m) { return m.id !== mem.id; });
-            S.saveData(data);
-            renderMemories();
-            renderHome();
-            showToast('纪念日已删除');
-          }
+          showConfirm({
+            title: '删除纪念日',
+            message: '确定要删除"' + mem.title + '"吗？此操作不可撤销。',
+            onConfirm: function () {
+              data.memories = data.memories.filter(function (m) { return m.id !== mem.id; });
+              S.saveData(data);
+              renderMemories();
+              renderHome();
+              showToast('纪念日已删除');
+            }
+          });
         });
         card.appendChild(delBtnB);
       }
@@ -649,15 +808,21 @@
     showToast('设置已保存');
   });
 
+  // 重置数据 — 使用自定义确认弹窗 + 输入确认码
   document.getElementById('btnResetData').addEventListener('click', function () {
-    if (confirm('确定要重置所有数据吗？此操作不可撤销。')) {
-      localStorage.removeItem('love-floating-window-data');
-      data = S.loadData();
-      renderHome();
-      renderTodos();
-      renderMemories();
-      showToast('数据已重置');
-    }
+    showConfirm({
+      title: '重置所有数据',
+      message: '此操作将清除所有留言、待办、纪念日和设置，且不可撤销。请输入"确认"以继续。',
+      requireInput: true,
+      onConfirm: function () {
+        localStorage.removeItem('love-floating-window-data');
+        data = S.loadData();
+        renderHome();
+        renderTodos();
+        renderMemories();
+        showToast('数据已重置');
+      }
+    });
   });
 
   // ==================== Global City Picker ====================
@@ -676,22 +841,25 @@
     var currentRegion = 'hot';
     var searchTimer = null;
 
-    // 打开/关闭
     function openPicker() {
-      // 关掉其他 picker
       document.querySelectorAll('.city-picker.open').forEach(function (p) {
         if (p !== picker) p.classList.remove('open');
       });
       picker.classList.add('open');
+      display.setAttribute('aria-expanded', 'true');
       searchInput.value = '';
       currentRegion = 'hot';
-      tabBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.region === 'hot'); });
+      tabBtns.forEach(function (b) {
+        b.classList.toggle('active', b.dataset.region === 'hot');
+        b.setAttribute('aria-selected', b.dataset.region === 'hot' ? 'true' : 'false');
+      });
       renderList('hot');
       setTimeout(function () { searchInput.focus(); }, 50);
     }
 
     function closePicker() {
       picker.classList.remove('open');
+      display.setAttribute('aria-expanded', 'false');
     }
 
     display.addEventListener('click', function (e) {
@@ -703,23 +871,23 @@
       }
     });
 
-    // 点击外部关闭
     document.addEventListener('click', function (e) {
       if (!picker.contains(e.target)) closePicker();
     });
 
-    // Tab 切换
     tabBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
         currentRegion = btn.dataset.region;
-        tabBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.region === currentRegion); });
+        tabBtns.forEach(function (b) {
+          b.classList.toggle('active', b.dataset.region === currentRegion);
+          b.setAttribute('aria-selected', b.dataset.region === currentRegion ? 'true' : 'false');
+        });
         searchInput.value = '';
         renderList(currentRegion);
         onlineEl.style.display = 'none';
       });
     });
 
-    // 搜索
     searchInput.addEventListener('input', function () {
       clearTimeout(searchTimer);
       var val = searchInput.value.trim();
@@ -728,7 +896,6 @@
         onlineEl.style.display = 'none';
         return;
       }
-      // 本地搜索
       var results = CITIES.filter(function (c) {
         var ql = val.toLowerCase();
         return c[0].toLowerCase().includes(ql) || c[1].toLowerCase().includes(ql);
@@ -736,20 +903,17 @@
 
       if (results.length > 0) {
         renderCityItems(results);
-        // 如果结果较少，显示在线搜索入口
         onlineEl.style.display = results.length < 8 ? 'flex' : 'none';
       } else {
         listEl.innerHTML = '<div class="city-picker-loading" style="padding:12px">本地未找到匹配城市</div>';
         onlineEl.style.display = 'flex';
       }
 
-      // 延迟在线搜索
       searchTimer = setTimeout(function () {
         if (val.length >= 2) searchOnline(val);
       }, 600);
     });
 
-    // 在线搜索
     function searchOnline(query) {
       var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=6&accept-language=zh';
       fetch(url, { headers: { 'User-Agent': 'LoveFloatingWindow/1.0' } })
@@ -764,13 +928,12 @@
 
           if (onlineItems.length === 0) return;
 
-          // 在列表末尾追加在线结果
           var sep = listEl.querySelector('.city-online-sep');
           if (sep) sep.remove();
 
           var separator = document.createElement('div');
           separator.className = 'city-online-sep';
-          separator.style.cssText = 'padding:6px 14px;font-size:11px;color:var(--muted);background:#fffbfc;border-top:1px solid var(--line);';
+          separator.style.cssText = 'padding:6px 14px;font-size:11px;color:var(--muted);background:var(--surface);border-top:1px solid var(--line);';
           separator.textContent = '在线搜索结果';
           listEl.appendChild(separator);
 
@@ -781,6 +944,7 @@
 
             var el = document.createElement('div');
             el.className = 'city-online-item';
+            el.setAttribute('role', 'option');
             el.innerHTML = '<div class="city-item-name"><span class="cn-name">' + escapeHTML(cityName) + '</span><span class="en-name">' + escapeHTML(countryName) + '</span></div><span class="online-badge">在线</span>';
             el.addEventListener('mousedown', function (e) {
               e.preventDefault();
@@ -789,16 +953,14 @@
             listEl.appendChild(el);
           });
         })
-        .catch(function () { /* 静默失败，不阻断用户体验 */ });
+        .catch(function () { /* 静默失败 */ });
     }
 
-    // 在线搜索入口点击
     onlineEl.addEventListener('click', function () {
       var val = searchInput.value.trim();
       if (val.length >= 2) searchOnline(val);
     });
 
-    // 渲染列表
     function renderList(region) {
       var cities = CITIES.filter(function (c) { return c[5] === region; });
       renderCityItems(cities);
@@ -807,13 +969,15 @@
     function renderCityItems(cities) {
       listEl.innerHTML = '';
       if (cities.length === 0) {
-        listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">暂无匹配城市</div>';
+        listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted-soft);font-size:13px">暂无匹配城市</div>';
         return;
       }
       var currentValue = document.getElementById(hiddenInputId).value;
       cities.forEach(function (city) {
         var el = document.createElement('div');
         el.className = 'city-item' + (city[0] === currentValue ? ' selected' : '');
+        el.setAttribute('role', 'option');
+        el.setAttribute('aria-selected', city[0] === currentValue ? 'true' : 'false');
         el.innerHTML = '<div class="city-item-name"><span class="cn-name">' + escapeHTML(city[0]) + '</span><span class="en-name">' + escapeHTML(city[1]) + '</span></div><span class="city-item-country">' + escapeHTML(city[2]) + '</span>';
         el.addEventListener('mousedown', function (e) {
           e.preventDefault();
@@ -832,7 +996,6 @@
       closePicker();
     }
 
-    // 初始渲染
     renderList('hot');
   }
 
@@ -847,7 +1010,6 @@
     if (syncEl) syncEl.textContent = '同步中 · ' + S.getNowTimeStr() + ' 更新';
   }, 10000);
 
-  // Listen for data updates from other windows
   if (window.electronAPI && window.electronAPI.onDataUpdated) {
     window.electronAPI.onDataUpdated(function () {
       data = S.loadData();
@@ -861,7 +1023,6 @@
 
   renderHome();
 
-  // 地图需要 DOM 完全就绪后才能正确计算容器尺寸
   setTimeout(function () {
     if (window.AppMap) {
       window.AppMap.init();
