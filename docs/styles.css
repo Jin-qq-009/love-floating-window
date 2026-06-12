@@ -590,13 +590,16 @@ select {
   position: fixed; inset: 0;
   background: rgba(43,36,48,.4);
   display: none; place-items: center;
-  z-index: 2000;
+  z-index: 99999;
   backdrop-filter: blur(4px);
+  isolation: isolate;
 }
 
 .modal-overlay.show { display: grid; }
 
 .modal {
+  position: relative;
+  z-index: 1;
   width: min(420px, 90vw);
   background: #fff;
   border-radius: 20px;
