@@ -132,9 +132,12 @@ window.AppStore = (function () {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const data = JSON.parse(raw);
-        // 迁移旧数据：补上城市字段
+        // 迁移旧数据：补上城市字段和对象昵称
         if (!data.me.city) { data.me.city = '诸暨'; data.me.lat = 29.7069; data.me.lng = 120.2362; }
         if (!data.partner.city) { data.partner.city = '北京'; data.partner.lat = 39.9042; data.partner.lng = 116.4074; }
+        if (data.partner.name === '阿远') { data.partner.name = '胖胖磨叽'; }
+        if (data.partner.avatar === '远') { data.partner.avatar = '胖'; }
+        saveData(data);
         return data;
       }
     } catch (e) {
