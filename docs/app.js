@@ -1728,7 +1728,8 @@
         audio.load();
       }
       if (!song.url) {
-        // 没有 URL，点击也不能播放
+        // 没有音频链接，显示提示
+        showToast('这首歌还没有音频链接，点击歌单 + 添加吧');
         return;
       }
       audio.play().catch(function (e) {

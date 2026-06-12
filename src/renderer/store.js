@@ -137,7 +137,7 @@ window.AppStore = (function () {
         },
       ],
       playlist: [
-        { id: 'pl1', title: '小幸运', artist: 'Hebe Tien' },
+        { id: 'pl1', title: '小幸运', artist: 'Hebe Tien', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808f9c17f.mp3' },
         { id: 'pl2', title: '往后余生', artist: '马良' },
         { id: 'pl3', title: '慢慢喜欢你', artist: 'Karen Mok' },
         { id: 'pl4', title: '就是爱你', artist: 'David Tao' },
