@@ -164,7 +164,9 @@
       var latest = data.messages[data.messages.length - 1];
       latestMsgEl.textContent = latest.content;
       var authorName = latest.author === 'me' ? data.me.name : data.partner.name;
-      latestMetaEl.textContent = authorName + ' · ' + latest.time;
+      var authorColor = latest.author === 'me' ? 'var(--color-me)' : 'var(--color-partner)';
+      latestMetaEl.innerHTML = '<span style="color:' + authorColor + ';font-weight:600">' + escapeHTML(authorName) + '</span>' +
+        '<span class="author-dot"></span>' + escapeHTML(latest.time || '');
     } else {
       latestMsgEl.textContent = '还没有留言，点击下方给 TA 留第一句吧';
       latestMetaEl.textContent = '';
@@ -194,9 +196,9 @@
     var previewEl = document.getElementById('todoPreview');
     previewEl.innerHTML = '';
     var allTodos = [
-      ...data.todos.me.map(function (t) { return Object.assign({}, t, { owner: data.me.name }); }),
-      ...data.todos.partner.map(function (t) { return Object.assign({}, t, { owner: data.partner.name }); }),
-      ...data.todos.shared.map(function (t) { return Object.assign({}, t, { owner: '共同' }); }),
+      ...data.todos.me.map(function (t) { return Object.assign({}, t, { owner: data.me.name, ownerColor: 'var(--color-me)' }); }),
+      ...data.todos.partner.map(function (t) { return Object.assign({}, t, { owner: data.partner.name, ownerColor: 'var(--color-partner)' }); }),
+      ...data.todos.shared.map(function (t) { return Object.assign({}, t, { owner: '共同', ownerColor: '#5ec6a0' }); }),
     ];
     var completedCount = (data.completed ? data.completed.me.length : 0)
       + (data.completed ? data.completed.partner.length : 0)
@@ -215,7 +217,13 @@
           cb.disabled = true;
           cb.style.accentColor = 'var(--brand)';
           label.appendChild(cb);
-          label.appendChild(document.createTextNode(' ' + t.owner + '：' + t.text));
+          var ownerSpan = document.createElement('span');
+          ownerSpan.className = 'todo-owner';
+          ownerSpan.style.color = t.ownerColor;
+          ownerSpan.textContent = t.owner;
+          label.appendChild(document.createTextNode(' '));
+          label.appendChild(ownerSpan);
+          label.appendChild(document.createTextNode('：' + t.text));
           previewEl.appendChild(label);
         });
       }
@@ -615,12 +623,30 @@
         showToast('已完成：' + item.text);
       });
       label.appendChild(cb);
-      label.appendChild(document.createTextNode(' ' + todo.text + ' '));
+      // 创建者标注
+      var taskContent = document.createElement('div');
+      taskContent.className = 'task-content';
+      var taskMain = document.createElement('div');
+      taskMain.className = 'task-main';
+      taskMain.textContent = todo.text;
       if (todo.note) {
-        var span = document.createElement('span');
-        span.textContent = todo.note;
-        label.appendChild(span);
+        var noteEl = document.createElement('span');
+        noteEl.className = 'task-note';
+        noteEl.textContent = todo.note;
+        taskMain.appendChild(noteEl);
       }
+      taskContent.appendChild(taskMain);
+      // 创建者信息
+      if (todo.createdBy) {
+        var creatorName = todo.createdBy === 'me' ? data.me.name : data.partner.name;
+        var creatorColor = todo.createdBy === 'me' ? 'var(--color-me)' : 'var(--color-partner)';
+        var creatorEl = document.createElement('span');
+        creatorEl.className = 'task-creator';
+        creatorEl.innerHTML = '<span style="color:' + creatorColor + ';font-weight:600">' + escapeHTML(creatorName) + '</span> 添加' +
+          (todo.createdAt ? '<span class="author-dot"></span>' + escapeHTML(todo.createdAt) : '');
+        taskContent.appendChild(creatorEl);
+      }
+      label.appendChild(taskContent);
       container.appendChild(label);
     });
   }
@@ -661,6 +687,15 @@
         noteEl.textContent = item.note;
         textWrap.appendChild(noteEl);
       }
+      // 创建者标注
+      if (item.createdBy) {
+        var creatorName = item.createdBy === 'me' ? data.me.name : data.partner.name;
+        var creatorColor = item.createdBy === 'me' ? 'var(--color-me)' : 'var(--color-partner)';
+        var creatorEl = document.createElement('span');
+        creatorEl.className = 'task-creator';
+        creatorEl.innerHTML = '<span style="color:' + creatorColor + ';font-weight:600">' + escapeHTML(creatorName) + '</span> 添加';
+        textWrap.appendChild(creatorEl);
+      }
 
       var timeEl = document.createElement('span');
       timeEl.className = 'completed-time';
@@ -690,7 +725,7 @@
     var note = document.getElementById('todoNoteInput').value.trim();
     if (!text) return;
 
-    var newTodo = { id: S.genId(), text: text, note: note };
+    var newTodo = { id: S.genId(), text: text, note: note, createdBy: 'me', createdAt: S.getNowTimeStr() };
     data.todos[currentTodoTarget].push(newTodo);
     S.saveData(data);
     closeModal('modalTodo');

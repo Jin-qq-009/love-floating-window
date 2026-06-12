@@ -863,6 +863,49 @@ select {
 
 .task span { grid-column: 2; }
 
+.task-content {
+  grid-column: 2;
+  display: grid;
+  gap: 2px;
+}
+
+.task-main {
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.task-note {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  font-style: italic;
+}
+
+.task-creator {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 10px;
+  color: var(--muted-soft);
+  line-height: 1;
+}
+
+/* 首页待办摘要中的创建者标注 */
+.todo-preview .todo-owner {
+  font-weight: 600;
+  font-size: var(--fs-xs);
+}
+
+/* 留言卡元数据增强 */
+.quick-note #latestMessageMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
 .add-task {
   margin-top: var(--sp-3);
   background: var(--brand-soft);
