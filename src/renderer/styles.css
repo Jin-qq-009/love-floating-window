@@ -185,6 +185,8 @@ body {
 }
 
 .map-route {
+  width: 100%;
+  min-width: 0;
   min-height: 200px;
   display: flex;
   flex-direction: column;
@@ -782,8 +784,11 @@ select {
 }
 
 @media (max-width: 860px) and (min-width: 681px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
   .meet-card {
-    grid-template-columns: minmax(120px, 1fr) minmax(160px, 48%);
+    grid-template-columns: 1fr;
     padding: 16px;
   }
   .meet-card h2 { font-size: 20px; }
