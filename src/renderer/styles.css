@@ -120,8 +120,18 @@ body {
 .tab.ghost { margin-left: auto; }
 
 /* Views */
-.view { display: none; padding: 18px; overflow-y: auto; }
+.view {
+  display: none;
+  padding: 18px;
+  overflow-y: auto;
+  animation: viewFadeIn .3s ease;
+}
 .view.active { display: block; }
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* Card base */
 .meet-card, .quick-note, .panel-card, .status-card,
@@ -630,6 +640,70 @@ select {
 .checkbox-row {
   display: flex; align-items: center; gap: 8px;
   font-size: 14px; cursor: pointer;
+}
+
+/* Empty state hint */
+.empty-hint {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 16px;
+  opacity: .7;
+}
+
+/* City autocomplete suggestions */
+.settings-item {
+  position: relative;
+}
+
+.city-suggestions {
+  position: absolute;
+  left: 0; right: 0;
+  top: 100%;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(151,82,113,.12);
+  overflow: hidden;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.city-suggestion-item {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.city-suggestion-item:hover {
+  background: var(--pink-soft);
+  color: var(--pink-dark);
+}
+
+/* Toast 通知 */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  padding: 12px 28px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e85d91, #d9467e);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(232,93,145,.35);
+  z-index: 9999;
+  opacity: 0;
+  transition: transform .4s cubic-bezier(.22,1,.36,1), opacity .4s ease;
+  pointer-events: none;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 /* Responsive */
