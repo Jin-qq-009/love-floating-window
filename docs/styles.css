@@ -1457,6 +1457,90 @@ select {
   box-shadow: 0 0 0 3px var(--brand-glow);
 }
 
+/* Section header */
+.settings-section-header {
+  grid-column: 1 / -1;
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--line-soft);
+}
+.settings-section-header + .settings-section-header {
+  margin-top: var(--sp-4);
+}
+
+/* Meetup row — 三字段一行 */
+.meetup-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 0.8fr;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+}
+
+.meetup-field {
+  position: relative;
+}
+
+.meetup-field label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.meetup-field input[type="text"],
+.meetup-field input[type="date"] {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  background: #fff;
+  font-family: inherit;
+  color: var(--ink);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.meetup-field input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+
+/* Person columns — 我的左 / TA的右 */
+.settings-person {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+}
+
+.settings-person-col {
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+}
+
+.person-col-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.settings-person-col .settings-item:last-child {
+  margin-bottom: 0;
+}
+
 .settings-actions {
   margin-top: var(--sp-6);
   display: flex;
@@ -1931,6 +2015,8 @@ select {
   .todo-board.wide, .completed-board.wide { grid-column: auto; }
   .memory-grid { grid-template-columns: 1fr 1fr; }
   .settings-list { grid-template-columns: 1fr; }
+  .meetup-row { grid-template-columns: 1fr; }
+  .settings-person { grid-template-columns: 1fr; }
   .quick-note { padding: var(--sp-4); }
   .avatar-edit-row { flex-direction: column; align-items: center; gap: var(--sp-4); }
   .avatar-emoji-grid { grid-template-columns: repeat(6, 1fr); }
@@ -1945,4 +2031,6 @@ select {
   .map-route { min-height: 180px; }
   .memory-grid { grid-template-columns: 1fr; }
   .hero-grid { gap: var(--sp-4); margin-bottom: var(--sp-5); }
+  .meetup-row { grid-template-columns: 1fr; gap: var(--sp-2); }
+  .settings-person { grid-template-columns: 1fr; gap: var(--sp-3); }
 }

@@ -4,16 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>我们的小窗</title>
-  <link rel="stylesheet" href="./leaflet.css?v=11">
-  <link rel="stylesheet" href="./styles.css?v=11">
-  <style>
-    /* 网页版适配 */
-    .window-actions { display: none !important; }
-    .titlebar { -webkit-app-region: no-drag; cursor: default; }
-    .titlebar-drag { -webkit-app-region: no-drag; }
-    .app-window { max-width: 960px; margin: 0 auto; min-height: 100vh; }
-    body { background: linear-gradient(135deg, #fff4f8 0%, #fff9f2 52%, #f9efff 100%); }
-  </style>
+  <link rel="stylesheet" href="./leaflet.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <a href="#mainContent" class="skip-nav">跳到主要内容</a>
@@ -276,98 +268,125 @@
           </div>
         </div>
 
-        <div class="settings-item">
-          <label>我的昵称</label>
-          <input type="text" id="settingMyName" placeholder="输入昵称">
+        <!-- 见面计划 — 前置，三字段一行 -->
+        <div class="settings-section-header">
+          <p class="eyebrow" style="margin:0">见面计划</p>
         </div>
-        <div class="settings-item city-picker-wrap">
-          <label>我的城市</label>
-          <div class="city-picker" id="myCityPicker">
-            <div class="city-picker-display" data-placeholder="选择城市" role="combobox" aria-expanded="false" aria-haspopup="listbox">
-              <span class="city-picker-value" id="myCityDisplay">诸暨</span>
-              <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="meetup-row">
+          <div class="meetup-field">
+            <label for="settingMeetupDate">见面日期</label>
+            <input type="date" id="settingMeetupDate">
+          </div>
+          <div class="meetup-field">
+            <label for="settingMeetupLocation">见面地点</label>
+            <input type="text" id="settingMeetupLocation" placeholder="输入地点">
+          </div>
+          <div class="meetup-field">
+            <label for="settingMeetupNote">备注</label>
+            <input type="text" id="settingMeetupNote" placeholder="输入备注">
+          </div>
+        </div>
+
+        <!-- 个人资料 — 我的在左，TA的在右 -->
+        <div class="settings-section-header">
+          <p class="eyebrow" style="margin:0">个人资料</p>
+        </div>
+        <div class="settings-person">
+          <!-- 我的 -->
+          <div class="settings-person-col">
+            <div class="person-col-badge">
+              <div class="avatar blush" style="width:22px;height:22px;font-size:11px" id="settingsMyMiniAvatar">倩</div>
+              <span>我的</span>
             </div>
-            <input type="hidden" id="settingMyCity" value="诸暨">
-            <input type="hidden" id="settingMyLat" value="29.7069">
-            <input type="hidden" id="settingMyLng" value="120.2362">
-            <div class="city-picker-dropdown" role="listbox" aria-label="城市列表">
-              <div class="city-picker-search-wrap">
-                <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）..." aria-label="搜索城市">
-              </div>
-              <div class="city-picker-tabs" role="tablist" aria-label="地区分类">
-                <button class="city-tab active" data-region="hot" role="tab" aria-selected="true">热门</button>
-                <button class="city-tab" data-region="cn" role="tab" aria-selected="false">中国</button>
-                <button class="city-tab" data-region="as" role="tab" aria-selected="false">亚洲</button>
-                <button class="city-tab" data-region="eu" role="tab" aria-selected="false">欧洲</button>
-                <button class="city-tab" data-region="na" role="tab" aria-selected="false">北美</button>
-                <button class="city-tab" data-region="sa" role="tab" aria-selected="false">南美</button>
-                <button class="city-tab" data-region="af" role="tab" aria-selected="false">非洲</button>
-                <button class="city-tab" data-region="oc" role="tab" aria-selected="false">大洋洲</button>
-              </div>
-              <div class="city-picker-list" role="listbox"></div>
-              <div class="city-picker-online" style="display:none">
-                <div class="city-picker-online-hint">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
-                  在线搜索更多城市...
+            <div class="settings-item">
+              <label for="settingMyName">昵称</label>
+              <input type="text" id="settingMyName" placeholder="输入昵称">
+            </div>
+            <div class="settings-item city-picker-wrap">
+              <label>城市</label>
+              <div class="city-picker" id="myCityPicker">
+                <div class="city-picker-display" data-placeholder="选择城市" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+                  <span class="city-picker-value" id="myCityDisplay">诸暨</span>
+                  <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <input type="hidden" id="settingMyCity" value="诸暨">
+                <input type="hidden" id="settingMyLat" value="29.7069">
+                <input type="hidden" id="settingMyLng" value="120.2362">
+                <div class="city-picker-dropdown" role="listbox" aria-label="城市列表">
+                  <div class="city-picker-search-wrap">
+                    <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）..." aria-label="搜索城市">
+                  </div>
+                  <div class="city-picker-tabs" role="tablist" aria-label="地区分类">
+                    <button class="city-tab active" data-region="hot" role="tab" aria-selected="true">热门</button>
+                    <button class="city-tab" data-region="cn" role="tab" aria-selected="false">中国</button>
+                    <button class="city-tab" data-region="as" role="tab" aria-selected="false">亚洲</button>
+                    <button class="city-tab" data-region="eu" role="tab" aria-selected="false">欧洲</button>
+                    <button class="city-tab" data-region="na" role="tab" aria-selected="false">北美</button>
+                    <button class="city-tab" data-region="sa" role="tab" aria-selected="false">南美</button>
+                    <button class="city-tab" data-region="af" role="tab" aria-selected="false">非洲</button>
+                    <button class="city-tab" data-region="oc" role="tab" aria-selected="false">大洋洲</button>
+                  </div>
+                  <div class="city-picker-list" role="listbox"></div>
+                  <div class="city-picker-online" style="display:none">
+                    <div class="city-picker-online-hint">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
+                      在线搜索更多城市...
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="settings-item">
-          <label>TA 的昵称</label>
-          <input type="text" id="settingPartnerName" placeholder="输入对方昵称">
-        </div>
-        <div class="settings-item city-picker-wrap">
-          <label>TA 的城市</label>
-          <div class="city-picker" id="partnerCityPicker">
-            <div class="city-picker-display" data-placeholder="选择城市" role="combobox" aria-expanded="false" aria-haspopup="listbox">
-              <span class="city-picker-value" id="partnerCityDisplay">北京</span>
-              <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+          <!-- TA的 -->
+          <div class="settings-person-col">
+            <div class="person-col-badge">
+              <div class="avatar lilac" style="width:22px;height:22px;font-size:11px" id="settingsPartnerMiniAvatar">胖</div>
+              <span>TA的</span>
             </div>
-            <input type="hidden" id="settingPartnerCity" value="北京">
-            <input type="hidden" id="settingPartnerLat" value="39.9042">
-            <input type="hidden" id="settingPartnerLng" value="116.4074">
-            <div class="city-picker-dropdown" role="listbox" aria-label="城市列表">
-              <div class="city-picker-search-wrap">
-                <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）..." aria-label="搜索城市">
-              </div>
-              <div class="city-picker-tabs" role="tablist" aria-label="地区分类">
-                <button class="city-tab active" data-region="hot" role="tab" aria-selected="true">热门</button>
-                <button class="city-tab" data-region="cn" role="tab" aria-selected="false">中国</button>
-                <button class="city-tab" data-region="as" role="tab" aria-selected="false">亚洲</button>
-                <button class="city-tab" data-region="eu" role="tab" aria-selected="false">欧洲</button>
-                <button class="city-tab" data-region="na" role="tab" aria-selected="false">北美</button>
-                <button class="city-tab" data-region="sa" role="tab" aria-selected="false">南美</button>
-                <button class="city-tab" data-region="af" role="tab" aria-selected="false">非洲</button>
-                <button class="city-tab" data-region="oc" role="tab" aria-selected="false">大洋洲</button>
-              </div>
-              <div class="city-picker-list" role="listbox"></div>
-              <div class="city-picker-online" style="display:none">
-                <div class="city-picker-online-hint">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
-                  在线搜索更多城市...
+            <div class="settings-item">
+              <label for="settingPartnerName">昵称</label>
+              <input type="text" id="settingPartnerName" placeholder="输入对方昵称">
+            </div>
+            <div class="settings-item city-picker-wrap">
+              <label>城市</label>
+              <div class="city-picker" id="partnerCityPicker">
+                <div class="city-picker-display" data-placeholder="选择城市" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+                  <span class="city-picker-value" id="partnerCityDisplay">北京</span>
+                  <svg class="city-picker-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <input type="hidden" id="settingPartnerCity" value="北京">
+                <input type="hidden" id="settingPartnerLat" value="39.9042">
+                <input type="hidden" id="settingPartnerLng" value="116.4074">
+                <div class="city-picker-dropdown" role="listbox" aria-label="城市列表">
+                  <div class="city-picker-search-wrap">
+                    <svg class="city-picker-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <input type="text" class="city-picker-search" placeholder="搜索城市（中文/英文）..." aria-label="搜索城市">
+                  </div>
+                  <div class="city-picker-tabs" role="tablist" aria-label="地区分类">
+                    <button class="city-tab active" data-region="hot" role="tab" aria-selected="true">热门</button>
+                    <button class="city-tab" data-region="cn" role="tab" aria-selected="false">中国</button>
+                    <button class="city-tab" data-region="as" role="tab" aria-selected="false">亚洲</button>
+                    <button class="city-tab" data-region="eu" role="tab" aria-selected="false">欧洲</button>
+                    <button class="city-tab" data-region="na" role="tab" aria-selected="false">北美</button>
+                    <button class="city-tab" data-region="sa" role="tab" aria-selected="false">南美</button>
+                    <button class="city-tab" data-region="af" role="tab" aria-selected="false">非洲</button>
+                    <button class="city-tab" data-region="oc" role="tab" aria-selected="false">大洋洲</button>
+                  </div>
+                  <div class="city-picker-list" role="listbox"></div>
+                  <div class="city-picker-online" style="display:none">
+                    <div class="city-picker-online-hint">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h12M8 2a10 10 0 014 6 10 10 0 01-4 6 10 10 0 01-4-6 10 10 0 014-6z" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>
+                      在线搜索更多城市...
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 见面计划分组 -->
-        <div class="settings-item">
-          <label>见面日期</label>
-          <input type="date" id="settingMeetupDate">
-        </div>
-        <div class="settings-item">
-          <label>见面地点</label>
-          <input type="text" id="settingMeetupLocation" placeholder="输入地点">
-        </div>
-        <div class="settings-item">
-          <label>见面备注</label>
-          <input type="text" id="settingMeetupNote" placeholder="输入备注">
-        </div>
         <div class="settings-actions">
           <button class="primary-btn" type="button" id="btnSaveSettings">保存设置</button>
           <button class="danger-btn" type="button" id="btnResetData">重置所有数据</button>
@@ -553,10 +572,10 @@
     </div>
   </div>
 
-  <script src="./store.js?v=11"></script>
-  <script src="./world-cities.js?v=11"></script>
-  <script src="./leaflet.js?v=11"></script>
-  <script src="./map.js?v=11"></script>
-  <script src="./app.js?v=11"></script>
+  <script src="./store.js"></script>
+  <script src="./world-cities.js"></script>
+  <script src="./leaflet.js"></script>
+  <script src="./map.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
